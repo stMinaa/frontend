@@ -234,10 +234,11 @@ function Signup({ onNavigate }) {
 
             {/* Phase 2: Role selection dropdown */}
             <div style={{ marginBottom: 15 }}>
-              <label style={{ display: 'block', marginBottom: 5, fontSize: 14, fontWeight: 500, color: '#2c3e50' }}>
+              <label htmlFor="role-select" style={{ display: 'block', marginBottom: 5, fontSize: 14, fontWeight: 500, color: '#2c3e50' }}>
                 Select Your Role:
               </label>
               <select
+                id="role-select"
                 value={role}
                 onChange={e => setRole(e.target.value)}
                 disabled={loading}

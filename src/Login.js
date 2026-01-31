@@ -213,13 +213,5 @@ function Login({ onLogin, onNavigate }) {
     </VideoBackground>
   );
 }
-          >
-            Sign up
-          </button>
-        </div>
-      </form>
-    </div>
-  );
-}
 
 export default Login;
