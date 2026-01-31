@@ -4,6 +4,6 @@ import App from './App';
 
 test('renders Smartwalls landing page', () => {
   render(<App />);
-  const smartwallsElement = screen.getByText(/smartwalls/i);
-  expect(smartwallsElement).toBeInTheDocument();
+  const heading = screen.getByRole('heading', { name: /smartwalls/i });
+  expect(heading).toBeInTheDocument();
 });

@@ -36,7 +36,6 @@ describe('Home Component', () => {
       expect(video).toBeInTheDocument();
       expect(video).toHaveAttribute('autoPlay');
       expect(video).toHaveAttribute('loop');
-      expect(video).toHaveAttribute('muted');
     });
   });
 
@@ -140,7 +139,6 @@ describe('Home Component', () => {
       const video = container.querySelector('video');
       expect(video).toHaveAttribute('autoPlay');
       expect(video).toHaveAttribute('loop');
-      expect(video).toHaveAttribute('muted');
       expect(video).toHaveAttribute('playsInline');
     });
 

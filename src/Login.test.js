@@ -19,8 +19,8 @@ describe('Login Component', () => {
   describe('Success Scenarios', () => {
     test('should render login form with all required elements', () => {
       render(<Login onLogin={mockOnLogin} onNavigate={mockOnNavigate} />);
-      
-      expect(screen.getByText('Log In')).toBeInTheDocument();
+
+      expect(screen.getByRole('heading', { name: /log in/i })).toBeInTheDocument();
       expect(screen.getByPlaceholderText('Username or Email')).toBeInTheDocument();
       expect(screen.getByPlaceholderText('Password')).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /log in/i })).toBeInTheDocument();
