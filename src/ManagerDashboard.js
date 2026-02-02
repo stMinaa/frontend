@@ -152,12 +152,8 @@ function ManagerDashboard({ user, activeTab = 'home' }) {
         }
         else setMessage(data.message || 'Failed to load buildings.');
 
-        // Fetch all pending tenants (no building assigned)
-        const resPending = await fetch('http://localhost:5000/api/tenants/pending', {
-          headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
-        });
-        const pendingData = await resPending.json();
-        if (resPending.ok) setGlobalPendingTenants(pendingData);
+        // No global pending tenants endpoint - will filter on client side when needed
+        setGlobalPendingTenants([]);
 
         // Load associates list
         try {
@@ -228,12 +224,8 @@ function ManagerDashboard({ user, activeTab = 'home' }) {
         if (resTen.ok) setTenants(tenantsData);
         else setMessage(tenantsData.message || 'Failed to load tenants.');
 
-        const resPending = await fetch(`http://localhost:5000/api/buildings/${selectedBuilding._id}/pending-tenants`, {
-          headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
-        });
-        const pendingData = await resPending.json();
-        if (resPending.ok) setPendingTenants(pendingData);
-        else setMessage(pendingData.message || 'Failed to load pending tenants.');
+        // No pending tenants endpoint - will show all tenants
+        setPendingTenants([]);
 
         // Fetch polls for the building
         const resPolls = await fetch(`http://localhost:5000/api/buildings/${selectedBuilding._id}/polls`, {
@@ -329,12 +321,10 @@ function ManagerDashboard({ user, activeTab = 'home' }) {
       const data = await res.json();
       if (!res.ok) { setMessage(data.message || 'Approval failed.'); return; }
       setMessage('Tenant approved.');
-      // Refresh tenants & pending for current building
+      // Refresh tenants for current building
       if (selectedBuilding) {
         fetch(`http://localhost:5000/api/buildings/${selectedBuilding._id}/tenants`, { headers:{'Authorization':'Bearer '+localStorage.getItem('token')} })
           .then(r=>r.json()).then(setTenants);
-        fetch(`http://localhost:5000/api/buildings/${selectedBuilding._id}/pending-tenants`, { headers:{'Authorization':'Bearer '+localStorage.getItem('token')} })
-          .then(r=>r.json()).then(setPendingTenants);
       }
     } catch (_) {
       setMessage('Approval failed.');
@@ -354,8 +344,6 @@ function ManagerDashboard({ user, activeTab = 'home' }) {
       if (selectedBuilding) {
         fetch(`http://localhost:5000/api/buildings/${selectedBuilding._id}/tenants`, { headers:{'Authorization':'Bearer '+localStorage.getItem('token')} })
           .then(r=>r.json()).then(setTenants);
-        fetch(`http://localhost:5000/api/buildings/${selectedBuilding._id}/pending-tenants`, { headers:{'Authorization':'Bearer '+localStorage.getItem('token')} })
-          .then(r=>r.json()).then(setPendingTenants);
       }
     } catch (_) {
       setMessage('Delete failed.');
