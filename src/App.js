@@ -49,7 +49,7 @@ function App() {
 
   // Logged in - Phase 2: Use Dashboard wrapper with role-based routing
   return (
-    <Dashboard 
+    <Dashboard
       user={user}
       activeTab={activeTab}
       onTabChange={handleTabChange}

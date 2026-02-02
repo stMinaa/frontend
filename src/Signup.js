@@ -57,7 +57,7 @@ function Signup({ onNavigate }) {
       }
 
       setSuccess('Account created! Your account requires manager approval. Redirecting to login...');
-      
+
       // Phase 2: Don't save anything to localStorage on signup
       // User must login after account creation
 
@@ -311,7 +311,7 @@ function Signup({ onNavigate }) {
                 {error}
               </div>
             )}
-            
+
             {success && (
               <div style={{
                 color: '#27ae60',

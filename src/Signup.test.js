@@ -24,7 +24,7 @@ describe('Signup Component', () => {
   describe('Success Scenarios', () => {
     test('should render signup form with all required elements', () => {
       render(<Signup onNavigate={mockOnNavigate} />);
-      
+
       expect(screen.getByRole('heading', { name: /sign up/i })).toBeInTheDocument();
       expect(screen.getByPlaceholderText('Username')).toBeInTheDocument();
       expect(screen.getByPlaceholderText('Email')).toBeInTheDocument();
@@ -161,7 +161,7 @@ describe('Signup Component', () => {
             })
           );
         });
-        
+
         unmount();
       }
     });
@@ -358,14 +358,14 @@ describe('Signup Component', () => {
           expect(screen.getByText(/invalid email format/i)).toBeInTheDocument();
         });
         expect(fetch).not.toHaveBeenCalled();
-        
+
         unmount();
       }
     });
 
     test('should default to tenant role', () => {
       render(<Signup onNavigate={mockOnNavigate} />);
-      
+
       const roleSelect = screen.getByLabelText(/select your role/i);
       expect(roleSelect.value).toBe('tenant');
     });
