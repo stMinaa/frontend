@@ -16,7 +16,6 @@ function TopNav({ user, activeTab, onTabChange, onLogout }) {
     }
     if (role === 'manager') {
       return [
-        { key: 'dashboard', label: 'Početna' },
         { key: 'buildings', label: 'Zgrade' }
       ];
     }

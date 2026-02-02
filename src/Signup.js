@@ -19,17 +19,17 @@ function Signup({ onNavigate }) {
 
     // Validation
     if (!username.trim() || !email.trim() || !password.trim()) {
-      setError('Username, email, and password are required');
+      setError('Korisničko ime, email i lozinka su obavezni');
       return;
     }
 
     if (password.length < 6) {
-      setError('Password must be at least 6 characters');
+      setError('Lozinka mora imati najmanje 6 karaktera');
       return;
     }
 
     if (!/^\S+@\S+\.\S+$/.test(email)) {
-      setError('Invalid email format');
+      setError('Neispravan format email-a');
       return;
     }
 
@@ -52,11 +52,11 @@ function Signup({ onNavigate }) {
       const data = await response.json();
 
       if (!response.ok) {
-        setError(data.message || 'Signup failed');
+        setError(data.message || 'Registracija neuspešna');
         return;
       }
 
-      setSuccess('Account created! Your account requires manager approval. Redirecting to login...');
+      setSuccess('Nalog kreiran! Vaš nalog zahteva odobrenje upravnika. Preusmeravam na prijavu...');
 
       // Phase 2: Don't save anything to localStorage on signup
       // User must login after account creation
@@ -66,7 +66,7 @@ function Signup({ onNavigate }) {
         onNavigate('login');
       }, 2000);
     } catch (err) {
-      setError('Connection error. Is the backend running on port 5000?');
+      setError('Greška prilikom konekcije. Da li backend radi na portu 5000?');
       console.error(err);
     } finally {
       setLoading(false);
@@ -114,7 +114,7 @@ function Signup({ onNavigate }) {
               fontWeight: 500
             }}
           >
-            Home
+            Početna
           </button>
           <button
             onClick={() => onNavigate('login')}
@@ -129,7 +129,7 @@ function Signup({ onNavigate }) {
               fontWeight: 500
             }}
           >
-            Login
+            Prijava
           </button>
         </div>
       </div>
@@ -146,7 +146,7 @@ function Signup({ onNavigate }) {
           background: 'white',
           padding: '40px 50px',
           borderRadius: 12,
-          boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
+          backdropFilter: 'blur(10px)',
           width: '100%',
           maxWidth: 450
         }}>
@@ -156,14 +156,14 @@ function Signup({ onNavigate }) {
             fontSize: 28,
             color: '#2c3e50'
           }}>
-            Sign Up
+            Registracija
           </h2>
 
           <form onSubmit={handleSubmit}>
             <div style={{ marginBottom: 15 }}>
               <input
                 type="text"
-                placeholder="Username"
+                placeholder="Korisničko ime"
                 value={username}
                 onChange={e => setUsername(e.target.value)}
                 disabled={loading}
@@ -199,7 +199,7 @@ function Signup({ onNavigate }) {
             <div style={{ marginBottom: 15 }}>
               <input
                 type="text"
-                placeholder="First Name (optional)"
+                placeholder="Ime (opciono)"
                 value={firstName}
                 onChange={e => setFirstName(e.target.value)}
                 disabled={loading}
@@ -217,7 +217,7 @@ function Signup({ onNavigate }) {
             <div style={{ marginBottom: 15 }}>
               <input
                 type="text"
-                placeholder="Last Name (optional)"
+                placeholder="Prezime (opciono)"
                 value={lastName}
                 onChange={e => setLastName(e.target.value)}
                 disabled={loading}
@@ -235,7 +235,7 @@ function Signup({ onNavigate }) {
             {/* Phase 2: Role selection dropdown */}
             <div style={{ marginBottom: 15 }}>
               <label htmlFor="role-select" style={{ display: 'block', marginBottom: 5, fontSize: 14, fontWeight: 500, color: '#2c3e50' }}>
-                Select Your Role:
+                Izaberite ulogu:
               </label>
               <select
                 id="role-select"
@@ -252,20 +252,20 @@ function Signup({ onNavigate }) {
                   background: 'white'
                 }}
               >
-                <option value="tenant">Tenant</option>
-                <option value="manager">Manager</option>
-                <option value="director">Director</option>
-                <option value="associate">Associate</option>
+                <option value="tenant">Stanar</option>
+                <option value="manager">Upravnik</option>
+                <option value="director">Šef</option>
+                <option value="associate">Servis</option>
               </select>
               <small style={{ fontSize: 13, color: '#7f8c8d', display: 'block', marginTop: 5 }}>
-                Your account will require approval based on your selected role.
+                Vaš nalog zahteva odobrenje na osnovu izabrane uloge.
               </small>
             </div>
 
             <div style={{ marginBottom: 20 }}>
               <input
                 type="password"
-                placeholder="Password (min 6 characters)"
+                placeholder="Lozinka (minimum 6 karaktera)"
                 value={password}
                 onChange={e => setPassword(e.target.value)}
                 disabled={loading}
@@ -298,7 +298,7 @@ function Signup({ onNavigate }) {
               onMouseOver={(e) => !loading && (e.target.style.background = '#229954')}
               onMouseOut={(e) => !loading && (e.target.style.background = '#27ae60')}
             >
-              {loading ? 'Creating account...' : 'Sign Up'}
+              {loading ? 'Kreiram nalog...' : 'Registruj se'}
             </button>
 
             {error && (
@@ -330,7 +330,7 @@ function Signup({ onNavigate }) {
               fontSize: 15,
               color: '#7f8c8d'
             }}>
-              Already have an account?{' '}
+              Već imate nalog?{' '}
               <button
                 type="button"
                 onClick={() => onNavigate('login')}
@@ -345,7 +345,7 @@ function Signup({ onNavigate }) {
                   fontWeight: 500
                 }}
               >
-                Login
+                Prijavi se
               </button>
             </div>
           </form>

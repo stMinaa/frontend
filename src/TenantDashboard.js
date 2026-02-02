@@ -148,7 +148,7 @@ function TenantDashboard({ user, tenantNav, setTenantNav }) {
       }
     } catch (e) {
       console.error(e);
-      alert('Voting failed. Please try again.');
+      alert('Glasanje neuspešno. Molimo pokušajte ponovo.');
     }
   };
 
@@ -156,12 +156,12 @@ function TenantDashboard({ user, tenantNav, setTenantNav }) {
   const handleReport = async (e) => {
     e.preventDefault();
     if (!title.trim()) {
-      setError('Please add a title.');
+      setError('Molimo dodajte naslov.');
       setSuccess('');
       return;
     }
     if (!issue.trim()) {
-      setError('Please describe the issue.');
+      setError('Molimo opišite problem.');
       setSuccess('');
       return;
     }
@@ -178,15 +178,15 @@ function TenantDashboard({ user, tenantNav, setTenantNav }) {
       });
       const data = await res.json();
       if (res.ok) {
-        setSuccess('Issue reported!');
+        setSuccess('Kvar prijavljen!');
         setIssue('');
         setTitle('');
         setPriority('low');
       } else {
-        setError(data.message || 'Failed to report issue.');
+        setError(data.message || 'Neuspešno prijavljivanje kvara.');
       }
     } catch (err) {
-      setError('Failed to report issue.');
+      setError('Neuspešno prijavljivanje kvara.');
     }
   };
 
@@ -194,12 +194,12 @@ function TenantDashboard({ user, tenantNav, setTenantNav }) {
   const handlePostNotice = async (e) => {
     e.preventDefault();
     if (!noticeContent.trim()) {
-      setError('Please enter notice content.');
+      setError('Molimo unesite sadržaj obaveštenja.');
       setSuccess('');
       return;
     }
     if (!user?.building) {
-      setError('No building assigned. Cannot post notice.');
+      setError('Zgrada nije dodeljena. Ne možete objaviti obaveštenje.');
       return;
     }
     setError('');
@@ -215,7 +215,7 @@ function TenantDashboard({ user, tenantNav, setTenantNav }) {
       });
       const data = await res.json();
       if (res.ok) {
-        setSuccess('Notice posted!');
+        setSuccess('Obaveštenje objavljeno!');
         setNoticeContent('');
         // Refetch notices
         fetch(`http://localhost:5000/api/buildings/${user.building}/notices`, {
@@ -226,10 +226,10 @@ function TenantDashboard({ user, tenantNav, setTenantNav }) {
             if (Array.isArray(data)) setNotices(data);
           });
       } else {
-        setError(data.message || 'Failed to post notice.');
+        setError(data.message || 'Neuspešno objavljivanje obaveštenja.');
       }
     } catch (err) {
-      setError('Failed to post notice.');
+      setError('Neuspešno objavljivanje obaveštenja.');
     }
   };
 
@@ -242,7 +242,7 @@ function TenantDashboard({ user, tenantNav, setTenantNav }) {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        alert(data.message || 'Failed to delete notice');
+        alert(data.message || 'Neuspešno brisanje obaveštenja');
         return;
       }
       // Refresh notices
@@ -253,7 +253,7 @@ function TenantDashboard({ user, tenantNav, setTenantNav }) {
         if (nr.ok) setNotices(await nr.json());
       }
     } catch (e) {
-      alert('Failed to delete notice');
+      alert('Neuspešno brisanje obaveštenja');
     }
   };
 
@@ -273,8 +273,13 @@ function TenantDashboard({ user, tenantNav, setTenantNav }) {
   // Nicely formatted status label for display; default to 'Reported'
   const statusLabel = (s) => {
     const st = (s || 'reported').toString().toLowerCase().replace(/-/g, ' ');
-    if (st === 'open') return 'Reported';
-    if (st === 'in progress') return 'In progress';
+    if (st === 'open') return 'Prijavljen';
+    if (st === 'reported') return 'Prijavljen';
+    if (st === 'forwarded') return 'Prosleđen';
+    if (st === 'assigned') return 'Dodeljen';
+    if (st === 'in progress') return 'U toku';
+    if (st === 'resolved') return 'Rešen';
+    if (st === 'rejected') return 'Odbijen';
     return st.split(' ').map(w => w ? w[0].toUpperCase() + w.slice(1) : '').join(' ');
   };
 
@@ -298,7 +303,7 @@ function TenantDashboard({ user, tenantNav, setTenantNav }) {
   const formatCountdown = (when) => {
     if (!when) return '';
     const diff = new Date(when).getTime() - Date.now();
-    if (diff <= 0) return 'about now';
+    if (diff <= 0) return 'uskoro';
     const d = Math.floor(diff / (1000 * 60 * 60 * 24));
     const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
     const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
@@ -315,15 +320,15 @@ function TenantDashboard({ user, tenantNav, setTenantNav }) {
       });
       const data = await res.json();
       if (res.ok) {
-        setEtaAckMsg('Acknowledged. We’ll let the repair team know.');
+        setEtaAckMsg('Potvrđeno. Obavestićemo tim za popravke.');
         // refresh issues
         fetch('http://localhost:5000/api/issues/my', { headers: { 'Authorization': 'Bearer ' + token } })
           .then(r => r.json()).then(d => Array.isArray(d) && setIssues(d));
       } else {
-        setEtaAckMsg(data.message || 'Failed to acknowledge');
+        setEtaAckMsg(data.message || 'Neuspešno potvrđivanje');
       }
     } catch {
-      setEtaAckMsg('Failed to acknowledge');
+      setEtaAckMsg('Neuspešno potvrđivanje');
     }
   };
   const icsHref = useMemo(() => {
@@ -337,7 +342,7 @@ function TenantDashboard({ user, tenantNav, setTenantNav }) {
       `DTSTAMP:${fmt(new Date())}`,
       `DTSTART:${fmt(dt)}`,
       `DTEND:${fmt(dtEnd)}`,
-      'SUMMARY:Repair visit',
+      'SUMMARY:Poseta za popravku',
       `DESCRIPTION:${(lastIssue.description || '').replace(/\n/g, ' ')}`,
       'END:VEVENT', 'END:VCALENDAR'
     ].join('\r\n');
@@ -390,7 +395,7 @@ function TenantDashboard({ user, tenantNav, setTenantNav }) {
           </div>
         </div>
         <div style={{display:'flex',gap:8,margin:'8px 4px'}}>
-          <button className="btn-flat btn-flat-primary" onClick={()=>setShowNoticeModal(true)}>New Notice</button>
+          <button className="btn-flat btn-flat-primary" onClick={()=>setShowNoticeModal(true)}>Novo obaveštenje</button>
         </div>
         <div className="postit-grid" style={{marginTop:8}}>
           {items.map(item => (
@@ -406,13 +411,13 @@ function TenantDashboard({ user, tenantNav, setTenantNav }) {
                   const isMgr = item.authorRole === 'manager';
                   if (isMgr) {
                     const outlineColor = darken(base,0.25);
-                    return { border:`2px solid ${outlineColor}`, boxShadow:'0 4px 12px rgba(0,0,0,0.08)' };
+                    return { border:`2px solid ${outlineColor}` };
                   }
-                  return { boxShadow:'0 8px 18px rgba(0,0,0,0.08)' };
+                  return {};
                 }
                 if (item.type === 'poll') {
                   const outlineColor = darken(base,0.25);
-                  return { border:`2px solid ${outlineColor}`, boxShadow:'0 4px 12px rgba(0,0,0,0.08)' };
+                  return { border:`2px solid ${outlineColor}` };
                 }
                 return {};
               })()}
@@ -428,7 +433,7 @@ function TenantDashboard({ user, tenantNav, setTenantNav }) {
                       className="btn-flat btn-flat-outline"
                       style={{marginTop:8,fontSize:12,padding:'4px 8px'}}
                       onClick={()=>handleDeleteNotice(item.noticeId)}
-                    >Delete</button>
+                    >Obriši</button>
                   )}
                 </>
               ) : (
@@ -451,9 +456,9 @@ function TenantDashboard({ user, tenantNav, setTenantNav }) {
                       <div style={{marginTop:8}}>
                         <div style={{fontSize:12,fontWeight:600}}>
                           {isClosed ? (
-                            leaders.length===0 ? 'Closed • No votes' : `Closed • Winner${leaders.length>1?'s':''}: ${leaders.join(', ')}`
+                            leaders.length===0 ? 'Zatvoreno • Nema glasova' : `Zatvoreno • Pobednik${leaders.length>1?'i':''}: ${leaders.join(', ')}`
                           ) : (
-                            leaders.length===0 ? 'No votes yet' : (leaders.length>1 ? `Tie: ${leaders.join(', ')}` : `Leading: ${leaders[0]}`)
+                            leaders.length===0 ? 'Još nema glasova' : (leaders.length>1 ? `Nerešeno: ${leaders.join(', ')}` : `Vodi: ${leaders[0]}`)
                           )}
                         </div>
                         {!isClosed && (
@@ -473,12 +478,12 @@ function TenantDashboard({ user, tenantNav, setTenantNav }) {
           {items.length === 0 && <div className="muted">Nema sadržaja.</div>}
         </div>
         {showNoticeModal && (
-          <Modal title="Post a Notice" onClose={()=>setShowNoticeModal(false)}>
+          <Modal title="Objavi obaveštenje" onClose={()=>setShowNoticeModal(false)}>
             <form onSubmit={(e)=>{handlePostNotice(e); if(noticeContent.trim()) setShowNoticeModal(false);}} style={{display:'grid',gap:12}}>
-              <textarea rows={4} placeholder="Share a building notice..." value={noticeContent} onChange={e=>setNoticeContent(e.target.value)} />
+              <textarea rows={4} placeholder="Podelite obaveštenje za zgradu..." value={noticeContent} onChange={e=>setNoticeContent(e.target.value)} />
               <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
-                <button type="submit" className="btn-flat btn-flat-primary">Post Notice</button>
-                <button type="button" className="btn-flat btn-flat-outline" onClick={()=>{setNoticeContent('');setShowNoticeModal(false);}}>Cancel</button>
+                <button type="submit" className="btn-flat btn-flat-primary">Objavi obaveštenje</button>
+                <button type="button" className="btn-flat btn-flat-outline" onClick={()=>{setNoticeContent('');setShowNoticeModal(false);}}>Otkaži</button>
               </div>
             </form>
             {success && <div style={{marginTop:8,color:'green',fontSize:13}}>{success}</div>}
@@ -495,10 +500,10 @@ function TenantDashboard({ user, tenantNav, setTenantNav }) {
         <div className="card-header">
           {/* dynamic title per tenantNav to avoid repeating 'Tenant Dashboard' */}
           <h2>{
-            tenantNav === 'dashboard' ? 'Tenant Dashboard' :
-            tenantNav === 'issues' ? 'My Issues' : 'Tenant Dashboard'
+            tenantNav === 'dashboard' ? 'Kontrolna tabla stanara' :
+            tenantNav === 'issues' ? 'Moji kvarovi' : 'Kontrolna tabla stanara'
           }</h2>
-          <div className="muted">Welcome back, {user?.firstName || user?.username}</div>
+          <div className="muted">Dobrodošli nazad, {user?.firstName || user?.username}</div>
         </div>
 
         {/* Keep report available via button on Overview/Issues; legacy route retained */}
@@ -507,53 +512,53 @@ function TenantDashboard({ user, tenantNav, setTenantNav }) {
         {(tenantNav === 'issues') && (
           <div>
             <div className="card" style={{padding:16, marginBottom:16, border:'1px solid #e2e8f0'}}>
-              <h4 style={{marginTop:0}}>Report a Building Issue</h4>
+              <h4 style={{marginTop:0}}>Prijavite kvar u zgradi</h4>
               <form onSubmit={handleReport} style={{display:'grid',gap:8}}>
-                <input placeholder="Short title (e.g., Leaking sink)" value={title} onChange={e=>setTitle(e.target.value)} />
-                <textarea placeholder="Describe the issue..." value={issue} onChange={e=>setIssue(e.target.value)} rows={5} />
+                <input placeholder="Kratak naslov (npr. Curenje česme)" value={title} onChange={e=>setTitle(e.target.value)} />
+                <textarea placeholder="Opišite problem..." value={issue} onChange={e=>setIssue(e.target.value)} rows={5} />
                 <div>
                   <label style={{marginRight:8}}>
-                    <input type="radio" name="priority" value="high" checked={priority === 'high'} onChange={() => setPriority('high')} /> High
+                    <input type="radio" name="priority" value="high" checked={priority === 'high'} onChange={() => setPriority('high')} /> Visok
                   </label>
                   <label style={{marginRight:8}}>
-                    <input type="radio" name="priority" value="medium" checked={priority === 'medium'} onChange={() => setPriority('medium')} /> Medium
+                    <input type="radio" name="priority" value="medium" checked={priority === 'medium'} onChange={() => setPriority('medium')} /> Srednji
                   </label>
                   <label>
-                    <input type="radio" name="priority" value="low" checked={priority === 'low'} onChange={() => setPriority('low')} /> Low
+                    <input type="radio" name="priority" value="low" checked={priority === 'low'} onChange={() => setPriority('low')} /> Nizak
                   </label>
                 </div>
                 <div style={{display:'flex',gap:8}}>
-                  <button className="btn-flat btn-flat-primary" type="submit">Report Issue</button>
-                  <button type="button" className="btn-flat btn-flat-outline" onClick={() => { setTitle(''); setIssue(''); setPriority('low'); }}>Clear</button>
+                  <button className="btn-flat btn-flat-primary" type="submit">Prijavi kvar</button>
+                  <button type="button" className="btn-flat btn-flat-outline" onClick={() => { setTitle(''); setIssue(''); setPriority('low'); }}>Obriši polja</button>
                 </div>
               </form>
               {error && <div style={{color:'red',marginTop:8}}>{error}</div>}
               {success && <div style={{color:'green',marginTop:8}}>{success}</div>}
             </div>
             <div className="card-header" style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-              <h4>Your Issues</h4>
+              <h4>Vaši kvarovi</h4>
               <div style={{display:'flex', gap:8, alignItems:'center'}}>
                 <label style={{marginRight:4,fontSize:'0.9em'}}>Status:</label>
                 <select value={issueStatus} onChange={e => setIssueStatus(e.target.value)} style={{fontSize:'0.9em'}}>
-                  <option value="reported">Reported</option>
-                  <option value="forwarded">Forwarded</option>
-                  <option value="assigned">Assigned</option>
-                  <option value="in-progress">In progress</option>
-                  <option value="resolved">Resolved</option>
-                  <option value="rejected">Rejected</option>
+                  <option value="reported">Prijavljen</option>
+                  <option value="forwarded">Prosleđen</option>
+                  <option value="assigned">Dodeljen</option>
+                  <option value="in-progress">U toku</option>
+                  <option value="resolved">Rešen</option>
+                  <option value="rejected">Odbijen</option>
                 </select>
-                <label style={{marginLeft:8,marginRight:4,fontSize:'0.9em'}}>Sort by:</label>
+                <label style={{marginLeft:8,marginRight:4,fontSize:'0.9em'}}>Sortiraj po:</label>
                 <select value={issueSort} onChange={e => setIssueSort(e.target.value)} style={{fontSize:'0.9em'}}>
-                  <option value="newest">Newest First</option>
-                  <option value="oldest">Oldest First</option>
+                  <option value="newest">Najnoviji prvo</option>
+                  <option value="oldest">Najstariji prvo</option>
                 </select>
               </div>
             </div>
             {loading ? (
-              <div>Loading...</div>
+              <div>Učitavanje...</div>
             ) : (
               <ul className="issue-list">
-                {issues.length === 0 && <li>No issues reported yet.</li>}
+                {issues.length === 0 && <li>Nema prijavljenih kvarova.</li>}
                 {[...issues]
                   .filter(iss => {
                     if (issueStatus === 'reported') return true;
@@ -568,11 +573,11 @@ function TenantDashboard({ user, tenantNav, setTenantNav }) {
                   .map((iss) => (
                     <li key={iss._id}>
                       <div>
-                        <div style={{fontWeight:700}}>{iss.title || 'Issue'}</div>
+                        <div style={{fontWeight:700}}>{iss.title || 'Kvar'}</div>
                         <div className="meta">{new Date(iss.createdAt).toLocaleString()}</div>
                         <div className="muted">{iss.description}</div>
                         <div style={{fontSize:'0.9em',color:iss.priority==='high'?'#b00':'#555'}}>
-                          Priority: {iss.priority === 'high' ? 'High' : iss.priority === 'medium' ? 'Medium' : 'Low'}
+                          Prioritet: {iss.priority === 'high' ? 'Visok' : iss.priority === 'medium' ? 'Srednji' : 'Nizak'}
                         </div>
                       </div>
                       <div style={{textAlign:'right'}}>
@@ -592,21 +597,21 @@ function TenantDashboard({ user, tenantNav, setTenantNav }) {
             {/* Overview hero */}
             <div className="overview-hero" style={{marginBottom:12}}>
               <div>
-                <div className="hello">Hello{user?.firstName ? `, ${user.firstName}` : ''} 👋</div>
-                <div className="muted">Here’s what’s happening in your building</div>
+                <div className="hello">Zdravo{user?.firstName ? `, ${user.firstName}` : ''} 👋</div>
+                <div className="muted">Evo šta se dešava u vašoj zgradi</div>
               </div>
               <div className="kpi-chips">
-                <div className="chip sage"><span className="dot"/> {openIssuesCount} active issue(s)</div>
-                <div className="chip indigo"><span className="dot"/> {pollsToVoteCount} to vote</div>
-                <div className="chip amber"><span className="dot"/> {notices7dCount} notices this week</div>
+                <div className="chip sage"><span className="dot"/> {openIssuesCount} aktivnih kvarova</div>
+                <div className="chip indigo"><span className="dot"/> {pollsToVoteCount} za glasanje</div>
+                <div className="chip amber"><span className="dot"/> {notices7dCount} obaveštenja ove nedelje</div>
               </div>
             </div>
             <div style={{display:'grid',gridTemplateColumns:'1fr',gap:12}}>
               <div className="card accent-teal">
-                <h4 style={{marginTop:0}}>Quick Actions</h4>
+                <h4 style={{marginTop:0}}>Brze radnje</h4>
                 <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
-                  <button className="btn-flat btn-flat-primary" onClick={() => setTenantNav('issues')}>Report Issue</button>
-                  <button className="btn-flat btn-flat-outline" onClick={() => setTenantNav('issues')}>View My Issues</button>
+                  <button className="btn-flat btn-flat-primary" onClick={() => setTenantNav('issues')}>Prijavi kvar</button>
+                  <button className="btn-flat btn-flat-outline" onClick={() => setTenantNav('issues')}>Prikaži moje kvarove</button>
                 </div>
               </div>
               {/* At a Glance */}
@@ -614,29 +619,29 @@ function TenantDashboard({ user, tenantNav, setTenantNav }) {
                 {/* Most Recent Notice */}
                 <div className="card accent-amber" style={{padding:12}}>
                   <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-                    <h4 style={{margin:0}}>📢 Most Recent Notice</h4>
-                    {hasNewNotice && <span className="badge forwarded">New</span>}
+                    <h4 style={{margin:0}}>📢 Najnovije obaveštenje</h4>
+                    {hasNewNotice && <span className="badge forwarded">Novo</span>}
                   </div>
                   {latestNotice ? (
                     <div style={{marginTop:8}}>
                       <div style={{fontWeight:600}}>{latestNotice.content}</div>
-                      <div className="meta">By {latestNotice.authorName || 'Anonymous'} • {new Date(latestNotice.createdAt).toLocaleString()}</div>
-                      {hasNewNotice && <button className="btn ghost" style={{marginTop:8}} onClick={markNoticesRead}>Mark as read</button>}
+                      <div className="meta">Od {latestNotice.authorName || 'Anoniman'} • {new Date(latestNotice.createdAt).toLocaleString()}</div>
+                      {hasNewNotice && <button className="btn ghost" style={{marginTop:8}} onClick={markNoticesRead}>Označi kao pročitano</button>}
                     </div>
                   ) : (
-                    <div className="muted">No notices yet.</div>
+                    <div className="muted">Još nema obaveštenja.</div>
                   )}
                 </div>
 
                 {/* Polls awaiting your vote */}
                 <div className="card accent-indigo" style={{padding:12}}>
                   <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-                    <h4 style={{margin:0}}>🗳️ Polls To Vote</h4>
+                    <h4 style={{margin:0}}>🗳️ Ankete za glasanje</h4>
                     <span className="badge in-progress">{pollsToVoteCount}</span>
                   </div>
                   {pollsToVoteCount > 0 ? (
                     <div style={{marginTop:8}}>
-                      <div className="muted" style={{marginBottom:6}}>Here’s one waiting for you:</div>
+                      <div className="muted" style={{marginBottom:6}}>Evo jedne koja čeka na vas:</div>
                       {(() => {
                         const poll = unvotedPolls[0];
                         const voteCounts = poll.options.map(opt => poll.votes.filter(v => v.option === opt).length);
@@ -657,35 +662,35 @@ function TenantDashboard({ user, tenantNav, setTenantNav }) {
                       })()}
                     </div>
                   ) : (
-                    <div className="muted" style={{marginTop:8}}>You’re all caught up.</div>
+                    <div className="muted" style={{marginTop:8}}>Sve je ažurno.</div>
                   )}
                 </div>
 
                 {/* Last reported issue */}
                 <div className="card accent-rose" style={{padding:12}}>
-                  <h4 style={{margin:0}}>🛠️ Last Reported Issue</h4>
+                  <h4 style={{margin:0}}>🛠️ Poslednji prijavljeni kvar</h4>
                   {lastIssue ? (
                     <div style={{marginTop:8}}>
                       <div style={{fontWeight:600}}>{lastIssue.description}</div>
-                      <div className="meta">Reported {new Date(lastIssue.createdAt).toLocaleString()}</div>
+                      <div className="meta">Prijavljeno {new Date(lastIssue.createdAt).toLocaleString()}</div>
                       <div style={{marginTop:6}}><span className={statusClass(lastIssue.status)}>{statusLabel(lastIssue.status)}</span></div>
                       <div className="muted" style={{fontSize:12, marginTop:6}}>
-                        {lastIssue.assignee ? `Assigned to ${lastIssue.assignee}` : 'Awaiting assignment'}
+                        {lastIssue.assignee ? `Dodeljeno za ${lastIssue.assignee}` : 'Čeka dodelu'}
                       </div>
-                      <button className="btn ghost" style={{marginTop:8}} onClick={() => setTenantNav('issues')}>View all</button>
+                      <button className="btn ghost" style={{marginTop:8}} onClick={() => setTenantNav('issues')}>Prikaži sve</button>
                     </div>
                   ) : (
-                    <div className="muted">No issues reported yet.</div>
+                    <div className="muted">Nema prijavljenih kvarova.</div>
                   )}
                 </div>
 
                 {/* Quick Stats */}
                 <div className="card accent-sage" style={{padding:12}}>
-                  <h4 style={{margin:0}}>📊 Quick Stats</h4>
+                  <h4 style={{margin:0}}>📊 Brza statistika</h4>
                   <ul style={{listStyle:'none',padding:0,marginTop:8,display:'grid',gap:6}}>
-                    <li><b>{openIssuesCount}</b> active issue(s)</li>
-                    <li><b>{notices7dCount}</b> notice(s) this week</li>
-                    <li><b>{pollsToVoteCount}</b> poll(s) awaiting vote</li>
+                    <li><b>{openIssuesCount}</b> aktivnih kvarova</li>
+                    <li><b>{notices7dCount}</b> obaveštenja ove nedelje</li>
+                    <li><b>{pollsToVoteCount}</b> anketa čeka na glasanje</li>
                   </ul>
                 </div>
               </div>
@@ -695,36 +700,36 @@ function TenantDashboard({ user, tenantNav, setTenantNav }) {
                   {/* Micro-feed */}
                   <div className="card accent-sky" style={{padding:12}}>
                     <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-                      <h4 style={{margin:0}}>🧭 Since your last visit</h4>
-                      <button className="btn ghost" onClick={() => localStorage.setItem('tenantOverviewLastVisit', String(Date.now()))}>Mark as seen</button>
+                      <h4 style={{margin:0}}>🧭 Od vaše poslednje posete</h4>
+                      <button className="btn ghost" onClick={() => localStorage.setItem('tenantOverviewLastVisit', String(Date.now()))}>Označi kao viđeno</button>
                     </div>
                     {changesSince ? (
                       <div style={{marginTop:8}} className="muted">
-                        {(changesSince.notices || 0)} new notice(s), {(changesSince.polls || 0)} new poll(s), {(changesSince.issueUpdates || 0)} issue update(s)
+                        {(changesSince.notices || 0)} novih obaveštenja, {(changesSince.polls || 0)} novih anketa, {(changesSince.issueUpdates || 0)} ažuriranja kvarova
                       </div>
-                    ) : <div className="muted" style={{marginTop:8}}>Loading…</div>}
+                    ) : <div className="muted" style={{marginTop:8}}>Učitavanje…</div>}
                   </div>
 
                   {/* Service alerts */}
                   <div className="card accent-amber" style={{padding:12}}>
-                    <h4 style={{margin:0}}>⚠️ Service alerts</h4>
+                    <h4 style={{margin:0}}>⚠️ Servisna upozorenja</h4>
                     <ul style={{listStyle:'none',padding:0, marginTop:8}}>
                       {(notices||[])
                         .filter(n => ['service','elevator','delivery'].includes(n.type))
                         .slice(0,3)
                         .map(n => (
                           <li key={n._id} style={{marginBottom:8}}>
-                            <span className={`pill ${n.type}`}>{n.type === 'service' ? 'Maintenance' : n.type === 'elevator' ? 'Elevator' : 'Delivery'}</span> <span className="muted">•</span> {n.content}
-                            {n.expiresAt && <span className="meta"> • until {new Date(n.expiresAt).toLocaleString()}</span>}
+                            <span className={`pill ${n.type}`}>{n.type === 'service' ? 'Održavanje' : n.type === 'elevator' ? 'Lift' : 'Dostava'}</span> <span className="muted">•</span> {n.content}
+                            {n.expiresAt && <span className="meta"> • do {new Date(n.expiresAt).toLocaleString()}</span>}
                           </li>
                         ))}
-                      {(!notices || !(notices.filter(n => ['service','elevator','delivery'].includes(n.type)).length)) && <li className="muted">No active alerts</li>}
+                      {(!notices || !(notices.filter(n => ['service','elevator','delivery'].includes(n.type)).length)) && <li className="muted">Nema aktivnih upozorenja</li>}
                     </ul>
                   </div>
 
                   {/* Poll digest (voted) */}
                   <div className="card accent-teal" style={{padding:12}}>
-                    <h4 style={{margin:0}}>📈 Poll digest</h4>
+                    <h4 style={{margin:0}}>📈 Pregled anketa</h4>
                     <div style={{marginTop:8}}>
                       {(polls||[]).filter(p => p.votes?.some(v => v.voter === user._id)).slice(0,3).map(p => {
                         const totals = p.options.map(opt => p.votes.filter(v => v.option === opt).length);
@@ -732,7 +737,7 @@ function TenantDashboard({ user, tenantNav, setTenantNav }) {
                         return (
                           <div key={p._id} style={{marginBottom:10}}>
                             <div style={{fontWeight:600}}>{p.question}</div>
-                            <div className="meta">Results so far</div>
+                            <div className="meta">Rezultati do sada</div>
                             {p.options.map((opt,i) => (
                               <div key={opt} style={{display:'grid',gridTemplateColumns:'120px 1fr',gap:8, alignItems:'center'}}>
                                 <div className="meta">{opt}</div>
@@ -744,13 +749,13 @@ function TenantDashboard({ user, tenantNav, setTenantNav }) {
                           </div>
                         );
                       })}
-                      {(!(polls||[]).some(p => p.votes?.some(v => v.voter === user._id))) && <div className="muted">No polls voted yet.</div>}
+                      {(!(polls||[]).some(p => p.votes?.some(v => v.voter === user._id))) && <div className="muted">Još niste glasali ni u jednoj anketi.</div>}
                     </div>
                   </div>
 
                   {/* Weekly maintenance */}
                   <div className="card accent-indigo" style={{padding:12}}>
-                    <h4 style={{margin:0}}>🗓️ This week</h4>
+                    <h4 style={{margin:0}}>🗓️ Ove nedelje</h4>
                     <ul style={{listStyle:'none', padding:0, marginTop:8}}>
                       {(notices||[])
                         .filter(n => (['service','elevator','delivery'].includes(n.type)) && ((n.expiresAt && (new Date(n.expiresAt).getTime() - Date.now()) < 7*24*60*60*1000) || (Date.now() - new Date(n.createdAt).getTime()) < 7*24*60*60*1000))
@@ -760,7 +765,7 @@ function TenantDashboard({ user, tenantNav, setTenantNav }) {
                             <span style={{fontWeight:600}}>{new Date(n.expiresAt || n.createdAt).toLocaleDateString()}</span>: {n.content}
                           </li>
                         ))}
-                      {(!notices || !(notices.filter(n => (['service','elevator','delivery'].includes(n.type)) && ((n.expiresAt && (new Date(n.expiresAt).getTime() - Date.now()) < 7*24*60*60*1000) || (Date.now() - new Date(n.createdAt).getTime()) < 7*24*60*60*1000)).length)) && <li className="muted">Nothing scheduled</li>}
+                      {(!notices || !(notices.filter(n => (['service','elevator','delivery'].includes(n.type)) && ((n.expiresAt && (new Date(n.expiresAt).getTime() - Date.now()) < 7*24*60*60*1000) || (Date.now() - new Date(n.createdAt).getTime()) < 7*24*60*60*1000)).length)) && <li className="muted">Ništa zakazano</li>}
                     </ul>
                   </div>
                 </div>
@@ -768,20 +773,20 @@ function TenantDashboard({ user, tenantNav, setTenantNav }) {
               {/* Last issue details: ETA & history */}
               {lastIssue && (
                 <div className="card accent-teal" style={{marginTop:12}}>
-                  <h4 style={{marginTop:0}}>Your latest issue</h4>
+                  <h4 style={{marginTop:0}}>Vaš najnoviji kvar</h4>
                   <div className="muted">{new Date(lastIssue.createdAt).toLocaleString()}</div>
                   {lastIssue.eta && (
                     <div style={{marginTop:8}}>
-                      <div style={{fontWeight:600}}>Repair scheduled for {new Date(lastIssue.eta).toLocaleString()} ({formatCountdown(lastIssue.eta)})</div>
+                      <div style={{fontWeight:600}}>Popravka zakazana za {new Date(lastIssue.eta).toLocaleString()} ({formatCountdown(lastIssue.eta)})</div>
                       <div style={{display:'flex',gap:8,marginTop:8,flexWrap:'wrap'}}>
-                        {!lastIssue.etaAckByTenant && <button className="btn" onClick={handleEtaAck}>I’ll be home</button>}
-                        <a className="btn ghost" href={icsHref} download={`repair-${lastIssue._id}.ics`}>Add to calendar</a>
+                        {!lastIssue.etaAckByTenant && <button className="btn" onClick={handleEtaAck}>Biću kod kuće</button>}
+                        <a className="btn ghost" href={icsHref} download={`repair-${lastIssue._id}.ics`}>Dodaj u kalendar</a>
                       </div>
                       {etaAckMsg && <div className="muted" style={{marginTop:6}}>{etaAckMsg}</div>}
                     </div>
                   )}
                   <div style={{marginTop:10}}>
-                    <div style={{fontWeight:600}}>Recent updates</div>
+                    <div style={{fontWeight:600}}>Nedavna ažuriranja</div>
                     <ul style={{listStyle:'none', padding:0, marginTop:6}}>
                       {(lastIssue.history || []).slice(-3).reverse().map((h,i) => (
                         <li key={i} className="meta">{new Date(h.at || lastIssue.updatedAt || lastIssue.createdAt).toLocaleString()} • {h.action} {h.note ? `— ${h.note}` : ''}</li>
@@ -791,7 +796,7 @@ function TenantDashboard({ user, tenantNav, setTenantNav }) {
                 </div>
               )}
               <div>
-                <h4>Recent Issues</h4>
+                <h4>Nedavni kvarovi</h4>
                 <ul className="issue-list">
                   {issues.slice(0,3).map(iss => (
                     <li key={iss._id}>
@@ -800,13 +805,13 @@ function TenantDashboard({ user, tenantNav, setTenantNav }) {
                         <div className="meta">{new Date(iss.createdAt).toLocaleString()}</div>
                         <div className="muted">{iss.description}</div>
                         <div style={{fontSize:'0.9em',color:iss.priority==='high'?'#b00':'#555'}}>
-                          Priority: {iss.priority === 'high' ? 'High' : iss.priority === 'medium' ? 'Medium' : 'Low'}
+                          Prioritet: {iss.priority === 'high' ? 'Visok' : iss.priority === 'medium' ? 'Srednji' : 'Nizak'}
                         </div>
                       </div>
                       <div>{<div className={statusClass(iss.status)}>{statusLabel(iss.status)}</div>}</div>
                     </li>
                   ))}
-                  {issues.length === 0 && <li>No recent issues</li>}
+                  {issues.length === 0 && <li>Nema nedavnih kvarova</li>}
                 </ul>
               </div>
             </div>

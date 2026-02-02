@@ -338,13 +338,9 @@ function DirectorDashboard({ user, activeTab = 'zgrade' }) {
           </div>
 
           {showCreateForm && (
-            <div style={{
-              background: '#ffffff',
+            <div className="card" style={{
               padding: 30,
-              borderRadius: 8,
-              marginBottom: 30,
-              border: '1px solid #dee2e6',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
+              marginBottom: 30
             }}>
               <h3 style={{ fontSize: 20, fontWeight: 600, marginBottom: 20, color: '#2c3e50' }}>Kreiraj novu zgradu</h3>
               <form onSubmit={handleCreateBuilding} style={{ display: 'grid', gap: 18 }}>
@@ -488,7 +484,7 @@ function DirectorDashboard({ user, activeTab = 'zgrade' }) {
                     fontSize: 14,
                     fontWeight: 500
                   }}>
-                    {!building.imageUrl && 'Building'}
+                    {!building.imageUrl && 'Zgrada'}
                   </div>
                   <div style={{ padding: 20 }}>
                     <h4 style={{
@@ -610,7 +606,7 @@ function DirectorDashboard({ user, activeTab = 'zgrade' }) {
                 opacity: loading ? 0.6 : 1
               }}
             >
-              Obriši sve test korisnike
+              Grupno brisanje test korisnika
             </button>
           </div>
           {managers.length === 0 ? (
@@ -706,7 +702,7 @@ function DirectorDashboard({ user, activeTab = 'zgrade' }) {
 
       {tab === 'saradnici' && (
         <div style={{ padding: 40, textAlign: 'center', color: '#95a5a6' }}>
-          <h2>Saradnici</h2>
+          <h2>Servisi</h2>
           <p>Ova funkcionalnost će biti dostupna uskoro.</p>
         </div>
       )}
@@ -941,7 +937,7 @@ function DirectorDashboard({ user, activeTab = 'zgrade' }) {
             </p>
             <div style={{ marginBottom: 20 }}>
               <label style={{ display: 'block', marginBottom: 8, fontWeight: 500, color: '#2c3e50', fontSize: 14 }}>
-                Izaberi saradnika
+                Izaberi servis
               </label>
               <select
                 value={selectedIssue.assignedTo?._id || ''}
@@ -963,7 +959,7 @@ function DirectorDashboard({ user, activeTab = 'zgrade' }) {
                   cursor: loading ? 'not-allowed' : 'pointer'
                 }}
               >
-                <option value="">-- Izaberi saradnika --</option>
+                <option value="">-- Izaberi servis --</option>
                 {associates.filter(a => a.status === 'active').map(associate => (
                   <option key={associate._id} value={associate._id}>
                     {associate.firstName} {associate.lastName} ({associate.email})
@@ -972,7 +968,7 @@ function DirectorDashboard({ user, activeTab = 'zgrade' }) {
               </select>
               {associates.filter(a => a.status === 'active').length === 0 && (
                 <p style={{ marginTop: 12, color: '#7f8c8d', fontSize: 13 }}>
-                  Nema aktivnih saradnika
+                  Nema dostupnih servisa
                 </p>
               )}
             </div>

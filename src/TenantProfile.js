@@ -44,7 +44,7 @@ function TenantProfile({ user, token }) {
     <div style={{ display: 'flex', minHeight: '100vh', fontFamily: 'Arial, sans-serif' }}>
       <div style={{
         width: 220,
-        background: 'linear-gradient(180deg, #27AE60 0%, #52C77A 100%)',
+        background: '#27ae60',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',

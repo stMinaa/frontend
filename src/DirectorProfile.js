@@ -41,7 +41,7 @@ function DirectorProfile({ user, token }) {
     <div style={{ display: 'flex', minHeight: '100vh', fontFamily: 'Arial, sans-serif' }}>
       <div style={{
         width: 220,
-        background: 'linear-gradient(180deg, #95A5A6 0%, #B0BBBF 100%)',
+        background: '#95a5a6',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',

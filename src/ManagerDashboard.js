@@ -20,20 +20,20 @@ function ManagerDashboard({ user, activeTab = 'home' }) {
     // Parse floors and units per floor
     let floors = parseInt(bulkFloors);
     if (isNaN(floors) || floors < 1) {
-      setBulkError('Enter a valid number of floors.');
+      setBulkError('Unesite validan broj spratova.');
       setBulkLoading(false);
       return;
     }
     let startNumber = parseInt(bulkStartNumber);
     if (isNaN(startNumber) || startNumber < 1) {
-      setBulkError('Enter a valid starting apartment number.');
+      setBulkError('Unesite validan početni broj stana.');
       setBulkLoading(false);
       return;
     }
     // Accept comma-separated units per floor (e.g. 3,4,5)
     let unitsArr = bulkUnits.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n) && n > 0);
     if (unitsArr.length === 0) {
-      setBulkError('Enter units per floor (comma-separated, e.g. 3,4,5).');
+      setBulkError('Unesite stanove po spratu (razdvojeno zarezom, npr. 3,4,5).');
       setBulkLoading(false);
       return;
     }
@@ -65,10 +65,10 @@ function ManagerDashboard({ user, activeTab = 'home' }) {
           .then(res => res.json())
           .then(data => setApartments(data));
       } else {
-        setBulkError(data.message || 'Bulk creation failed.');
+        setBulkError(data.message || 'Grupno kreiranje neuspelo.');
       }
     } catch (err) {
-      setBulkError('Bulk creation failed.');
+      setBulkError('Grupno kreiranje neuspelo.');
     }
     setBulkLoading(false);
   };
@@ -123,8 +123,8 @@ function ManagerDashboard({ user, activeTab = 'home' }) {
   };
   const statusLabel = (s) => {
     const st = (s || 'reported').toString().toLowerCase().replace(/-/g, ' ');
-    if (st === 'open') return 'Reported';
-    if (st === 'in progress') return 'In progress';
+    if (st === 'open') return 'Prijavljen';
+    if (st === 'in progress') return 'U toku';
     return st.split(' ').map(w => w ? w[0].toUpperCase() + w.slice(1) : '').join(' ');
   };
 
@@ -150,7 +150,7 @@ function ManagerDashboard({ user, activeTab = 'home' }) {
             setSelectedBuilding(data[0]);
           }
         }
-        else setMessage(data.message || 'Failed to load buildings.');
+        else setMessage(data.message || 'Učitavanje zgrada neuspelo.');
 
         // No global pending tenants endpoint - will filter on client side when needed
         setGlobalPendingTenants([]);
@@ -164,7 +164,7 @@ function ManagerDashboard({ user, activeTab = 'home' }) {
           if (resAssoc.ok) setAssociates(assocData);
         } catch (_) {}
       } catch (err) {
-        setMessage('Error loading buildings or pending tenants.');
+        setMessage('Greška pri učitavanju zgrada ili stanara na čekanju.');
       }
     }
     fetchBuildingsAndPending();
@@ -215,14 +215,14 @@ function ManagerDashboard({ user, activeTab = 'home' }) {
         });
         const apartmentsData = await resApt.json();
         if (resApt.ok) setApartments(apartmentsData);
-        else setMessage(apartmentsData.message || 'Failed to load apartments.');
+        else setMessage(apartmentsData.message || 'Učitavanje stanova neuspelo.');
 
         const resTen = await fetch(`http://localhost:5000/api/buildings/${selectedBuilding._id}/tenants`, {
           headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
         });
         const tenantsData = await resTen.json();
         if (resTen.ok) setTenants(tenantsData);
-        else setMessage(tenantsData.message || 'Failed to load tenants.');
+        else setMessage(tenantsData.message || 'Učitavanje stanara neuspelo.');
 
         // No pending tenants endpoint - will show all tenants
         setPendingTenants([]);
@@ -252,11 +252,11 @@ function ManagerDashboard({ user, activeTab = 'home' }) {
           const filtered = (issuesData || []).filter(i => i.building && i.building._id === selectedBuilding._id);
           setIssues(filtered);
         } else {
-          setIssueError(issuesData.message || 'Failed to load issues.');
+          setIssueError(issuesData.message || 'Učitavanje kvarova neuspelo.');
         }
         setIssueLoading(false);
       } catch (err) {
-        setMessage('Error loading apartments/tenants.');
+        setMessage('Greška pri učitavanju stanova/stanara.');
       }
     }
     fetchApartmentsAndTenants();
@@ -272,7 +272,7 @@ function ManagerDashboard({ user, activeTab = 'home' }) {
       });
       const data = await res.json();
       if (res.ok) {
-        setMessage('Tenant assigned successfully.');
+        setMessage('Stanar uspešno dodeljen.');
         setGlobalPendingTenants(globalPendingTenants.filter(t => t._id !== tenantId));
         // Refresh apartments and tenants
         const resApt = await fetch(`http://localhost:5000/api/buildings/${buildingId}/apartments`, {
@@ -305,9 +305,9 @@ function ManagerDashboard({ user, activeTab = 'home' }) {
             localStorage.setItem('user', JSON.stringify(me));
           }
         } catch (_) {}
-      } else setMessage(data.message || 'Assignment failed.');
+      } else setMessage(data.message || 'Dodeljivanje neuspelo.');
     } catch (err) {
-      setMessage('Assignment failed.');
+      setMessage('Dodeljivanje neuspelo.');
     }
   };
 
@@ -319,34 +319,34 @@ function ManagerDashboard({ user, activeTab = 'home' }) {
         headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
       });
       const data = await res.json();
-      if (!res.ok) { setMessage(data.message || 'Approval failed.'); return; }
-      setMessage('Tenant approved.');
+      if (!res.ok) { setMessage(data.message || 'Odobrenje neuspelo.'); return; }
+      setMessage('Stanar odobren.');
       // Refresh tenants for current building
       if (selectedBuilding) {
         fetch(`http://localhost:5000/api/buildings/${selectedBuilding._id}/tenants`, { headers:{'Authorization':'Bearer '+localStorage.getItem('token')} })
           .then(r=>r.json()).then(setTenants);
       }
     } catch (_) {
-      setMessage('Approval failed.');
+      setMessage('Odobrenje neuspelo.');
     }
   };
 
   const deleteTenant = async (tenantId) => {
-    if (!window.confirm('Delete tenant? This cannot be undone.')) return;
+    if (!window.confirm('Obrisati stanara? Ova akcija se ne može poništiti.')) return;
     try {
       const res = await fetch(`http://localhost:5000/api/tenants/${tenantId}`, {
         method:'DELETE',
         headers:{'Authorization':'Bearer '+localStorage.getItem('token')}
       });
       const data = await res.json().catch(()=>({}));
-      if (!res.ok) { setMessage(data.message || 'Delete failed.'); return; }
-      setMessage('Tenant deleted.');
+      if (!res.ok) { setMessage(data.message || 'Brisanje neuspelo.'); return; }
+      setMessage('Stanar obrisan.');
       if (selectedBuilding) {
         fetch(`http://localhost:5000/api/buildings/${selectedBuilding._id}/tenants`, { headers:{'Authorization':'Bearer '+localStorage.getItem('token')} })
           .then(r=>r.json()).then(setTenants);
       }
     } catch (_) {
-      setMessage('Delete failed.');
+      setMessage('Brisanje neuspelo.');
     }
   };
 
@@ -354,17 +354,17 @@ function ManagerDashboard({ user, activeTab = 'home' }) {
   const createPoll = async (e) => {
     e.preventDefault();
     if (!pollQuestion.trim()) {
-      setMessage('Poll question is required.');
+      setMessage('Pitanje za anketu je obavezno.');
       return;
     }
     // Prepare options (trim and remove empties)
     const options = pollOptions.map(o => (o || '').trim()).filter(Boolean);
     if (options.length < 2) {
-      setMessage('Please provide at least 2 options.');
+      setMessage('Unesite najmanje 2 opcije.');
       return;
     }
     if (options.length > 7) {
-      setMessage('Maximum 7 options allowed.');
+      setMessage('Maksimum 7 opcija dozvoljeno.');
       return;
     }
     try {
@@ -385,12 +385,12 @@ function ManagerDashboard({ user, activeTab = 'home' }) {
         setPollQuestion('');
         setPollOptions(['', '']);
         setShowPollForm(false);
-        setMessage('Poll created.');
+        setMessage('Anketa kreirana.');
       } else {
-        setMessage(data.message || 'Failed to create poll.');
+        setMessage(data.message || 'Kreiranje ankete neuspelo.');
       }
     } catch (err) {
-      setMessage('Failed to create poll.');
+      setMessage('Kreiranje ankete neuspelo.');
     }
   };
 
@@ -408,13 +408,13 @@ function ManagerDashboard({ user, activeTab = 'home' }) {
         });
         const pollsData = await resPolls.json();
         if (resPolls.ok) setPolls(pollsData);
-        setMessage('Poll closed.');
+        setMessage('Anketa zatvorena.');
       } else {
         const data = await res.json().catch(()=>({}));
-        setMessage(data.message || 'Failed to close poll.');
+        setMessage(data.message || 'Zatvaranje ankete neuspelo.');
       }
     } catch (_) {
-      setMessage('Failed to close poll.');
+      setMessage('Zatvaranje ankete neuspelo.');
     }
   };
 
@@ -426,7 +426,7 @@ function ManagerDashboard({ user, activeTab = 'home' }) {
   };
   const removePollOption = (index) => {
     if (pollOptions.length <= 2) {
-      setMessage('At least 2 options are required.');
+      setMessage('Najmanje 2 opcije su obavezne.');
       return;
     }
     setPollOptions(pollOptions.filter((_, i) => i !== index));
@@ -437,7 +437,7 @@ function ManagerDashboard({ user, activeTab = 'home' }) {
   const handlePostNotice = async (e) => {
     e.preventDefault();
     setNoticeMsg('');
-    if (!noticeContent.trim()) { setNoticeMsg('Content required.'); return; }
+    if (!noticeContent.trim()) { setNoticeMsg('Sadržaj je obavezan.'); return; }
     try {
       const res = await fetch(`http://localhost:5000/api/buildings/${selectedBuilding._id}/notices`, {
         method: 'POST',
@@ -446,7 +446,7 @@ function ManagerDashboard({ user, activeTab = 'home' }) {
       });
       const data = await res.json();
       if (res.ok) {
-        setNoticeMsg('Notice posted.');
+        setNoticeMsg('Obaveštenje objavljeno.');
         setNoticeContent('');
         // Refresh
         const resNotices = await fetch(`http://localhost:5000/api/buildings/${selectedBuilding._id}/notices`, {
@@ -455,10 +455,10 @@ function ManagerDashboard({ user, activeTab = 'home' }) {
         const noticesData = await resNotices.json();
         if (resNotices.ok && Array.isArray(noticesData)) setNotices(noticesData);
       } else {
-        setNoticeMsg(data.message || 'Failed to post.');
+        setNoticeMsg(data.message || 'Objavljivanje neuspelo.');
       }
     } catch (_) {
-      setNoticeMsg('Failed to post.');
+      setNoticeMsg('Objavljivanje neuspelo.');
     }
   };
 
@@ -469,16 +469,16 @@ function ManagerDashboard({ user, activeTab = 'home' }) {
         headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
       });
       const data = await res.json().catch(()=>({}));
-      if (!res.ok) { setNoticeMsg(data.message || 'Delete failed'); return; }
+      if (!res.ok) { setNoticeMsg(data.message || 'Brisanje neuspelo'); return; }
       // Refresh
       const resNotices = await fetch(`http://localhost:5000/api/buildings/${selectedBuilding._id}/notices`, {
         headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
       });
       const noticesData = await resNotices.json();
       if (resNotices.ok && Array.isArray(noticesData)) setNotices(noticesData);
-      setNoticeMsg('Notice deleted.');
+      setNoticeMsg('Obaveštenje obrisano.');
     } catch (_) {
-      setNoticeMsg('Delete failed');
+      setNoticeMsg('Brisanje neuspelo');
     }
   };
 
@@ -491,8 +491,8 @@ function ManagerDashboard({ user, activeTab = 'home' }) {
   if (tab === 'home') {
     return (
       <div className="card" style={{minHeight:'40vh',display:'flex',flexDirection:'column',justifyContent:'center',alignItems:'center'}}>
-        <h2 style={{margin:0}}>Home</h2>
-        <div className="muted" style={{marginTop:8}}>Select "Buildings" to manage your properties.</div>
+        <h2 style={{margin:0}}>Početna</h2>
+        <div className="muted" style={{marginTop:8}}>Izaberite "Zgrade" da upravljate Vašim zgradama.</div>
       </div>
     );
   }
@@ -512,7 +512,7 @@ function ManagerDashboard({ user, activeTab = 'home' }) {
         <div style={{display:'flex',gap:16,alignItems:'center',flexWrap:'wrap',marginBottom:32}}>
           <input
             type="text"
-            placeholder="Pretraži po imenu ili adresi..."
+            placeholder="Pretraži po nazivu ili adresi..."
             value={buildingSearch}
             onChange={e=>setBuildingSearch(e.target.value)}
             style={{padding:'10px 14px',minWidth:300,border:'1px solid #d0d7de',borderRadius:6,fontSize:14}}
@@ -521,27 +521,27 @@ function ManagerDashboard({ user, activeTab = 'home' }) {
         </div>
         <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(320px,1fr))',gap:24}}>
           {filteredBuildings.map(b => (
-            <div key={b._id} style={{border:'1px solid #e1e4e8',borderRadius:8,overflow:'hidden',background:'#fff',boxShadow:'0 2px 8px rgba(0,0,0,0.08)',display:'flex',flexDirection:'column',transition:'box-shadow 0.2s'}}>
-              <div style={{height:200,background:'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',display:'flex',alignItems:'center',justifyContent:'center'}}>
+            <div key={b._id} className="card" style={{display:'flex',flexDirection:'column'}}>
+              <div style={{height:200,background:'#e9ecef',display:'flex',alignItems:'center',justifyContent:'center'}}>
                 {b.imageUrl && b.imageUrl.trim() ? (
                   <img src={b.imageUrl} alt={b.name || 'Building'} style={{width:'100%',height:'100%',objectFit:'cover'}} />
                 ) : (
-                  <div style={{fontSize:64,color:'rgba(255,255,255,0.3)'}}>🏢</div>
+                  <div style={{fontSize:18,color:'#95a5a6',fontWeight:300}}>Nema slike</div>
                 )}
               </div>
               <div style={{padding:20,flexGrow:1,display:'flex',flexDirection:'column',gap:12}}>
-                {(b.name && b.name.trim()) && <div style={{fontSize:18,fontWeight:600,color:'#24292e'}}>{b.name}</div>}
+                {(b.name && b.name.trim()) && <div style={{fontSize:18,fontWeight:600,color:'#2c3e50'}}>{b.name}</div>}
                 <div>
                   <div className="muted" style={{fontSize:12,marginBottom:4}}>Lokacija:</div>
-                  <div style={{fontSize:14,color:'#586069'}}>{b.address}</div>
+                  <div style={{fontSize:14,color:'#7f8c8d'}}>{b.address}</div>
                 </div>
                 <div>
                   <div className="muted" style={{fontSize:12,marginBottom:4}}>Broj stanova:</div>
-                  <div style={{fontSize:24,fontWeight:700,color:'#0366d6'}}>{b.apartmentCount || 0}</div>
+                  <div style={{fontSize:24,fontWeight:700,color:'#2c3e50'}}>{b.apartmentCount || 0}</div>
                 </div>
               </div>
-              <div style={{borderTop:'1px solid #e1e4e8'}}>
-                {['Building details','Issues','Bulletin Board'].map((lbl,idx) => {
+              <div style={{borderTop:'1px solid #dee2e6'}}>
+                {['Detalji zgrade','Kvarovi','Oglasna tabla'].map((lbl,idx) => {
                   const modeMap = {0:'tenants',1:'issues',2:'bulletin'};
                   return (
                     <button 
@@ -550,7 +550,7 @@ function ManagerDashboard({ user, activeTab = 'home' }) {
                         width:'100%',
                         background:'#fff',
                         border:'none',
-                        borderBottom: idx===2?'none':'1px solid #e1e4e8',
+                        borderBottom: idx===2?'none':'1px solid #dee2e6',
                         padding:'12px 16px',
                         cursor:'pointer',
                         fontSize:14,
@@ -569,9 +569,8 @@ function ManagerDashboard({ user, activeTab = 'home' }) {
             </div>
           ))}
           {buildings.length===0 && (
-            <div style={{textAlign:'center',padding:'60px 20px',color:'#586069',gridColumn:'1/-1'}}>
-              <div style={{fontSize:48,marginBottom:16}}>🏢</div>
-              <div style={{fontSize:16}}>Nema zgrada za prikaz</div>
+            <div style={{textAlign:'center',padding:'60px 20px',color:'#7f8c8d',gridColumn:'1/-1'}}>
+              <div style={{fontSize:16}}>Nema zgrada</div>
             </div>
           )}
         </div>
@@ -581,13 +580,13 @@ function ManagerDashboard({ user, activeTab = 'home' }) {
 
   // Ensure data for selected building for subviews (existing effect handles fetch)
   if (!selectedBuilding) {
-    return <div className="card"><div className="muted">Select a building from list.</div></div>;
+    return <div className="card"><div className="muted">Izaberite zgradu sa liste.</div></div>;
   }
 
   // Back bar
   const BackBar = () => (
     <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:16}}>
-      <button className="btn-flat btn-flat-outline" onClick={() => setViewMode('list')}>← Back to Buildings</button>
+      <button className="btn-flat btn-flat-outline" onClick={() => setViewMode('list')}>← Nazad na Zgrade</button>
       <h2 style={{margin:0,fontSize:20}}>{selectedBuilding.name || selectedBuilding.address}</h2>
     </div>
   );
@@ -597,11 +596,11 @@ function ManagerDashboard({ user, activeTab = 'home' }) {
     return (
       <div className="card" style={{padding:18}}>
         <BackBar />
-        <h3 style={{marginTop:0}}>Tenants</h3>
+        <h3 style={{marginTop:0}}>Stanari</h3>
         <div style={{display:'flex',gap:12,alignItems:'center',flexWrap:'wrap',marginBottom:12}}>
           <input
             type="text"
-            placeholder="Search tenants (name, email, unit, username)..."
+            placeholder="Pretraži stanare (ime, email, stan, korisničko ime)..."
             value={tenantQuery}
             onChange={e=>setTenantQuery(e.target.value)}
             style={{padding:'6px 10px',minWidth:280,border:'1px solid #d0d7de',borderRadius:6}}
@@ -619,11 +618,11 @@ function ManagerDashboard({ user, activeTab = 'home' }) {
         <table style={{width:'100%',borderCollapse:'collapse',fontSize:14}}>
           <thead>
             <tr style={{textAlign:'left',borderBottom:'1px solid #e2e8f0'}}>
-              <th style={{padding:'8px 6px'}}>Name</th>
-              <th style={{padding:'8px 6px'}}>Unit</th>
+              <th style={{padding:'8px 6px'}}>Ime</th>
+              <th style={{padding:'8px 6px'}}>Stan</th>
               <th style={{padding:'8px 6px'}}>Email</th>
               <th style={{padding:'8px 6px'}}>Status</th>
-              <th style={{padding:'8px 6px'}}>Actions</th>
+              <th style={{padding:'8px 6px'}}>Akcije</th>
             </tr>
           </thead>
           <tbody>
@@ -638,7 +637,7 @@ function ManagerDashboard({ user, activeTab = 'home' }) {
             }).map(t => (
               <tr key={t._id} style={{borderBottom:'1px solid #f1f5f9'}}>
                 <td style={{padding:'8px 6px'}}>{t.firstName} {t.lastName}<div className="muted" style={{fontSize:11}}>{t.username}</div></td>
-                <td style={{padding:'8px 6px'}}>{t.apartment?`Unit ${t.apartment.unitNumber}`:'-'}</td>
+                <td style={{padding:'8px 6px'}}>{t.apartment?`Stan ${t.apartment.unitNumber}`:'-'}</td>
                 <td style={{padding:'8px 6px'}}>{t.email}</td>
                 <td style={{padding:'8px 6px'}}><span className={`pill ${t.status==='active'?'good':'warn'}`}>{t.status}</span></td>
                 <td style={{padding:'8px 6px'}}>
@@ -647,7 +646,7 @@ function ManagerDashboard({ user, activeTab = 'home' }) {
                       className="btn-flat btn-flat-outline"
                       style={{fontSize:12,padding:'4px 8px'}}
                       onClick={async()=>{
-                        if(!window.confirm('Delete tenant and free unit?')) return;
+                        if(!window.confirm('Obrisati stanara i osloboditi stan?')) return;
                         try {
                           const res = await fetch(`http://localhost:5000/api/tenants/${t._id}`, { method:'DELETE', headers:{'Authorization':'Bearer '+localStorage.getItem('token')} });
                           if (res.ok) {
@@ -660,38 +659,38 @@ function ManagerDashboard({ user, activeTab = 'home' }) {
                           }
                         } catch(_) {}
                       }}
-                    >Delete</button>
+                    >Obriši</button>
                   )}
                 </td>
               </tr>
             ))}
-            {tenants.length===0 && <tr><td colSpan={4} style={{padding:'12px 6px'}} className="muted">No tenants.</td></tr>}
+            {tenants.length===0 && <tr><td colSpan={4} style={{padding:'12px 6px'}} className="muted">Nema stanara.</td></tr>}
           </tbody>
         </table>
         <div style={{marginTop:32}}>
-          <h3 style={{margin:'0 0 8px'}}>Pending Claims</h3>
+          <h3 style={{margin:'0 0 8px'}}>Zahtevi na čekanju</h3>
           <table style={{width:'100%',borderCollapse:'collapse',fontSize:14}}>
             <thead>
               <tr style={{textAlign:'left',borderBottom:'1px solid #e2e8f0'}}>
-                <th style={{padding:'8px 6px'}}>Name</th>
-                <th style={{padding:'8px 6px'}}>Claimed Unit</th>
+                <th style={{padding:'8px 6px'}}>Ime</th>
+                <th style={{padding:'8px 6px'}}>Prijavljeni stan</th>
                 <th style={{padding:'8px 6px'}}>Email</th>
-                <th style={{padding:'8px 6px'}}>Actions</th>
+                <th style={{padding:'8px 6px'}}>Akcije</th>
               </tr>
             </thead>
             <tbody>
               {pendingTenants.map(p => (
                 <tr key={p._id} style={{borderBottom:'1px solid #f1f5f9'}}>
                   <td style={{padding:'8px 6px'}}>{p.firstName} {p.lastName}</td>
-                  <td style={{padding:'8px 6px'}}>{p.requestedApartment? `Unit ${p.requestedApartment.unitNumber}` : '-'}</td>
+                  <td style={{padding:'8px 6px'}}>{p.requestedApartment? `Stan ${p.requestedApartment.unitNumber}` : '-'}</td>
                   <td style={{padding:'8px 6px'}}>{p.email}</td>
                   <td style={{padding:'8px 6px',display:'flex',gap:8}}>
-                    <button className="btn-flat btn-flat-primary" onClick={()=>approveTenant(p._id)}>Approve</button>
-                    <button className="btn-flat btn-flat-outline" onClick={()=>deleteTenant(p._id)}>Delete</button>
+                    <button className="btn-flat btn-flat-primary" onClick={()=>approveTenant(p._id)}>Odobri</button>
+                    <button className="btn-flat btn-flat-outline" onClick={()=>deleteTenant(p._id)}>Obriši</button>
                   </td>
                 </tr>
               ))}
-              {pendingTenants.length===0 && <tr><td colSpan={4} style={{padding:'12px 6px'}} className="muted">No pending claims.</td></tr>}
+              {pendingTenants.length===0 && <tr><td colSpan={4} style={{padding:'12px 6px'}} className="muted">Nema zahteva na čekanju.</td></tr>}
             </tbody>
           </table>
         </div>
@@ -707,38 +706,38 @@ function ManagerDashboard({ user, activeTab = 'home' }) {
     return (
       <div className="card" style={{padding:18}}>
         <BackBar />
-        <h3 style={{marginTop:0}}>Building Issues</h3>
+        <h3 style={{marginTop:0}}>Kvarovi u zgradi</h3>
         <div style={{display:'flex',gap:8,alignItems:'center',flexWrap:'wrap',margin:'6px 0 16px'}}>
-          <button className={`btn-flat ${issueUrgency==='all'?'btn-flat-primary':'btn-flat-outline'}`} onClick={()=>setIssueUrgency('all')}>All</button>
-          <button className={`btn-flat ${issueUrgency==='urgent'?'btn-flat-primary':'btn-flat-outline'}`} onClick={()=>setIssueUrgency('urgent')}>Urgent</button>
-          <button className={`btn-flat ${issueUrgency==='not-urgent'?'btn-flat-primary':'btn-flat-outline'}`} onClick={()=>setIssueUrgency('not-urgent')}>Not urgent</button>
+          <button className={`btn-flat ${issueUrgency==='all'?'btn-flat-primary':'btn-flat-outline'}`} onClick={()=>setIssueUrgency('all')}>Sve</button>
+          <button className={`btn-flat ${issueUrgency==='urgent'?'btn-flat-primary':'btn-flat-outline'}`} onClick={()=>setIssueUrgency('urgent')}>Hitno</button>
+          <button className={`btn-flat ${issueUrgency==='not-urgent'?'btn-flat-primary':'btn-flat-outline'}`} onClick={()=>setIssueUrgency('not-urgent')}>Nije hitno</button>
           <div className="muted" style={{marginLeft:8,fontSize:12}}>{filtered.length} of {triage.length}</div>
         </div>
-        {filtered.length===0 && <div className="muted">No issues to triage.</div>}
+        {filtered.length===0 && <div className="muted">Nema kvarova za obradu.</div>}
         <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(280px,1fr))',gap:20}}>
           {filtered.map(issue => (
-            <div key={issue._id} style={{background:'#fff',border:'1px solid #e5e7eb',borderRadius:10,padding:16,boxShadow:'0 4px 14px rgba(0,0,0,0.06)'}}>
+            <div key={issue._id} className="card" style={{padding:16}}>
               <div style={{fontSize:24,fontWeight:700, textAlign:'center', lineHeight:1.2, marginBottom:8}}>{issue.title}</div>
-              <div style={{fontWeight:700, textAlign:'center'}}>Priority:</div>
-              <div style={{textAlign:'center', marginBottom:10}}>{issue.priority==='high' ? 'High' : issue.priority==='medium' ? 'Medium' : 'Low'}</div>
-              <div style={{fontWeight:600, marginTop:6}}>Description:</div>
+              <div style={{fontWeight:700, textAlign:'center'}}>Prioritet:</div>
+              <div style={{textAlign:'center', marginBottom:10}}>{issue.priority==='high' ? 'Visok' : issue.priority==='medium' ? 'Srednji' : 'Nizak'}</div>
+              <div style={{fontWeight:600, marginTop:6}}>Opis:</div>
               <div style={{color:'#334155'}}>{issue.description}</div>
-              <div style={{fontWeight:600, marginTop:10}}>Location:</div>
+              <div style={{fontWeight:600, marginTop:10}}>Lokacija:</div>
               <div className="muted">{issue.building ? (issue.building.name ? `${issue.building.name}, ${issue.building.address}` : issue.building.address) : ''}</div>
-              <div style={{fontWeight:600, marginTop:6}}>Unit:</div>
+              <div style={{fontWeight:600, marginTop:6}}>Stan:</div>
               <div className="muted">{issue.apartment ? issue.apartment.unitNumber : '-'}</div>
               <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',gap:8,marginTop:12,flexWrap:'wrap'}}>
                 <span className={statusClass(issue.status)}>{statusLabel(issue.status)}</span>
                 <div style={{display:'flex',gap:8,alignItems:'center',flexWrap:'wrap'}}>
                   <select value={assignPick[issue._id] || ''} onChange={e => setAssignPick(prev => ({ ...prev, [issue._id]: e.target.value }))} style={{padding:'6px 8px'}}>
-                    <option value="">Select associate</option>
+                    <option value="">Izaberi servis</option>
                     {associates.map(a => (
                       <option key={a.username} value={a.username}>{`${a.firstName || ''} ${a.lastName || ''}`.trim()}{a.company?` — ${a.company}`:''}</option>
                     ))}
                   </select>
                   <button className="btn-flat btn-flat-primary" disabled={!assignPick[issue._id]} onClick={async()=>{
                     try {
-                      const res = await fetch(`http://localhost:5000/api/issues/${issue._id}/assign`, { method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('token')}, body: JSON.stringify({ assignee: assignPick[issue._id] }) });
+                      const res = await fetch(`http://localhost:5000/api/issues/${issue._id}/triage`, { method:'PATCH', headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('token')}, body: JSON.stringify({ action: 'assign', associateId: assignPick[issue._id] }) });
                       if (res.ok) {
                         // Optimistically remove from triage list
                         setIssues(prev => prev.filter(i => i._id !== issue._id));
@@ -748,10 +747,10 @@ function ManagerDashboard({ user, activeTab = 'home' }) {
                           .then(all=>{ if (Array.isArray(all)) setIssues((all||[]).filter(i=>i.building && i.building._id===selectedBuilding._id)); });
                       }
                     } catch(_) {}
-                  }}>Assign</button>
+                  }}>Dodeli</button>
                   <button className="btn-flat btn-flat-outline" onClick={async()=>{
                     try {
-                      const res = await fetch(`http://localhost:5000/api/issues/${issue._id}/forward`, { method:'POST', headers:{'Authorization':'Bearer '+localStorage.getItem('token')} });
+                      const res = await fetch(`http://localhost:5000/api/issues/${issue._id}/triage`, { method:'PATCH', headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('token')}, body: JSON.stringify({ action: 'forward' }) });
                       if (res.ok) {
                         setIssues(prev => prev.filter(i => i._id !== issue._id));
                         fetch('http://localhost:5000/api/issues', { headers:{'Authorization':'Bearer '+localStorage.getItem('token')} })
@@ -759,11 +758,11 @@ function ManagerDashboard({ user, activeTab = 'home' }) {
                           .then(all=>{ if (Array.isArray(all)) setIssues((all||[]).filter(i=>i.building && i.building._id===selectedBuilding._id)); });
                       }
                     } catch(_) {}
-                  }}>Forward to director</button>
+                  }}>Prosledi šefu</button>
                   <button className="btn-flat btn-flat-outline" onClick={async()=>{
-                    if(!window.confirm('Reject this issue?')) return;
+                    if(!window.confirm('Odbiti ovaj kvar?')) return;
                     try {
-                      const res = await fetch(`http://localhost:5000/api/issues/${issue._id}/status`, { method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('token')}, body: JSON.stringify({ status:'rejected' }) });
+                      const res = await fetch(`http://localhost:5000/api/issues/${issue._id}/triage`, { method:'PATCH', headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('token')}, body: JSON.stringify({ action: 'reject' }) });
                       if (res.ok) {
                         setIssues(prev => prev.filter(i => i._id !== issue._id));
                         fetch('http://localhost:5000/api/issues', { headers:{'Authorization':'Bearer '+localStorage.getItem('token')} })
@@ -771,7 +770,7 @@ function ManagerDashboard({ user, activeTab = 'home' }) {
                           .then(all=>{ if (Array.isArray(all)) setIssues((all||[]).filter(i=>i.building && i.building._id===selectedBuilding._id)); });
                       }
                     } catch(_) {}
-                  }}>Reject issue</button>
+                  }}>Odbij</button>
                 </div>
               </div>
             </div>
@@ -801,10 +800,10 @@ function ManagerDashboard({ user, activeTab = 'home' }) {
       <div className="card" style={{padding:18}}>
         <BackBar />
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:12}}>
-          <h3 style={{marginTop:0,marginBottom:0}}>Bulletin Board</h3>
+          <h3 style={{marginTop:0,marginBottom:0}}>Oglasna tabla</h3>
           <div style={{display:'flex',gap:8}}>
-            <button className="btn-flat btn-flat-primary" onClick={()=>setShowNoticeModal(true)}>New Notice</button>
-            <button className="btn-flat btn-flat-outline" onClick={()=>setShowPollForm(true)}>New Poll</button>
+            <button className="btn-flat btn-flat-primary" onClick={()=>setShowNoticeModal(true)}>Kreiraj obaveštenje</button>
+            <button className="btn-flat btn-flat-outline" onClick={()=>setShowPollForm(true)}>Kreiraj anketu</button>
           </div>
         </div>
         <div className="postit-grid" style={{marginTop:16}}>
@@ -823,19 +822,18 @@ function ManagerDashboard({ user, activeTab = 'home' }) {
                   key={item._id}
                   className={`postit ${color}`}
                   style={isMgr ? {
-                    border:`2px solid ${outlineColor}`,
-                    boxShadow:`0 4px 12px rgba(0,0,0,0.08)`
-                  } : { boxShadow:'0 8px 18px rgba(0,0,0,0.08)'}}
+                    border:`2px solid ${outlineColor}`
+                  } : {}}
                 >
                   <div className="meta" style={{fontSize:12}}>{new Date(item.createdAt).toLocaleDateString()}</div>
-                  <div className="title">Notice</div>
+                  <div className="title">Obaveštenje</div>
                   <div>{item.content}</div>
-                  <div className="meta" style={{marginTop:6, fontWeight:isMgr?'600':'normal'}}>{item.authorName || 'Manager'}{isMgr?' • Manager':''}</div>
+                  <div className="meta" style={{marginTop:6, fontWeight:isMgr?'600':'normal'}}>{item.authorName || 'Upravnik'}{isMgr?' • Upravnik':''}</div>
                   <button
                     className="btn-flat btn-flat-outline"
                     style={{marginTop:8,fontSize:12,padding:'4px 8px'}}
                     onClick={()=>handleDeleteNotice(item._id)}
-                  >Delete</button>
+                  >Obriši</button>
                 </div>
               );
             } else {
@@ -852,19 +850,18 @@ function ManagerDashboard({ user, activeTab = 'home' }) {
                   key={p._id}
                   className={`postit ${color}`}
                   style={{
-                    border:`2px solid ${outlineColor}`,
-                    boxShadow:'0 4px 12px rgba(0,0,0,0.08)'
+                    border:`2px solid ${outlineColor}`
                   }}
                 >
-                  <div className="title">Poll</div>
+                  <div className="title">Anketa</div>
                   <div style={{marginBottom:6}}>{p.question}</div>
                   <PieChart data={data} size={120} />
-                  <div className="meta">{p.votes.length} vote{p.votes.length===1?'':'s'}</div>
+                  <div className="meta">{p.votes.length} glas{p.votes.length===1?'':'ova'}</div>
                   <div style={{marginTop:6,fontSize:12,fontWeight:600}}>
                     {isClosed ? (
-                      leadingOptions.length===0 ? 'Closed • No votes' : `Closed • Winner${leadingOptions.length>1?'s':''}: ${leadingOptions.join(', ')}`
+                      leadingOptions.length===0 ? 'Zatvorena • Nema glasova' : `Zatvorena • Pobednik${leadingOptions.length>1?'i':''}: ${leadingOptions.join(', ')}`
                     ) : (
-                      leadingOptions.length===0 ? 'No votes yet' : (leadingOptions.length>1 ? `Tie: ${leadingOptions.join(', ')}` : `Leading: ${leadingOptions[0]}`)
+                      leadingOptions.length===0 ? 'Još nema glasova' : (leadingOptions.length>1 ? `Nerešeno: ${leadingOptions.join(', ')}` : `Vodi: ${leadingOptions[0]}`)
                     )}
                   </div>
                   {!isClosed && (
@@ -872,52 +869,52 @@ function ManagerDashboard({ user, activeTab = 'home' }) {
                       className="btn-flat btn-flat-outline"
                       style={{marginTop:8,fontSize:12,padding:'4px 8px'}}
                       onClick={()=>closePoll(p._id)}
-                    >Close Poll</button>
+                    >Zatvori anketu</button>
                   )}
                 </div>
               );
             }
           })}
-          {combined.length===0 && <div className="muted">No bulletin items.</div>}
+          {combined.length===0 && <div className="muted">Nema stavki na oglasnoj tabli.</div>}
         </div>
         {showNoticeModal && (
-          <Modal title="New Notice" onClose={()=>setShowNoticeModal(false)}>
+          <Modal title="Novo obaveštenje" onClose={()=>setShowNoticeModal(false)}>
             <form onSubmit={handlePostNotice} style={{display:'grid',gap:12}}>
-              <textarea rows={4} placeholder="Share a building notice..." value={noticeContent} onChange={e=>setNoticeContent(e.target.value)} />
+              <textarea rows={4} placeholder="Podelite obaveštenje o zgradi..." value={noticeContent} onChange={e=>setNoticeContent(e.target.value)} />
               <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
-                <button type="submit" className="btn-flat btn-flat-primary">Post Notice</button>
-                <button type="button" className="btn-flat btn-flat-outline" onClick={()=>{setNoticeContent('');setShowNoticeModal(false);}}>Cancel</button>
+                <button type="submit" className="btn-flat btn-flat-primary">Objavi obaveštenje</button>
+                <button type="button" className="btn-flat btn-flat-outline" onClick={()=>{setNoticeContent('');setShowNoticeModal(false);}}>Otkaži</button>
               </div>
             </form>
             {noticeMsg && <div style={{marginTop:8,fontSize:13}}>{noticeMsg}</div>}
           </Modal>
         )}
         {showPollForm && (
-          <Modal title="New Poll" onClose={()=>setShowPollForm(false)}>
+          <Modal title="Nova anketa" onClose={()=>setShowPollForm(false)}>
             <form onSubmit={createPoll} style={{display:'grid',gap:12}}>
-              <input type="text" placeholder="Poll question" value={pollQuestion} onChange={e=>setPollQuestion(e.target.value)} />
+              <input type="text" placeholder="Pitanje za anketu" value={pollQuestion} onChange={e=>setPollQuestion(e.target.value)} />
               <div style={{display:'grid',gap:8}}>
                 {pollOptions.map((opt,idx)=>(
                   <div key={idx} style={{display:'flex',gap:8,alignItems:'center'}}>
                     <input
                       type="text"
-                      placeholder={`Option ${idx+1}`}
+                      placeholder={`Opcija ${idx+1}`}
                       value={opt}
                       onChange={e=>updatePollOption(idx,e.target.value)}
                       style={{flex:1}}
                     />
                     {pollOptions.length>2 && (
-                      <button type="button" className="btn-flat btn-flat-outline" style={{fontSize:12}} onClick={()=>removePollOption(idx)}>Remove</button>
+                      <button type="button" className="btn-flat btn-flat-outline" style={{fontSize:12}} onClick={()=>removePollOption(idx)}>Ukloni</button>
                     )}
                   </div>
                 ))}
               </div>
               <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
-                <button type="button" className="btn-flat btn-flat-outline" disabled={pollOptions.length>=7} onClick={addPollOption}>Add Option</button>
-                <button type="submit" className="btn-flat btn-flat-primary">Create Poll</button>
-                <button type="button" className="btn-flat btn-flat-outline" onClick={()=>{setShowPollForm(false);}}>Cancel</button>
+                <button type="button" className="btn-flat btn-flat-outline" disabled={pollOptions.length>=7} onClick={addPollOption}>Dodaj opciju</button>
+                <button type="submit" className="btn-flat btn-flat-primary">Kreiraj anketu</button>
+                <button type="button" className="btn-flat btn-flat-outline" onClick={()=>{setShowPollForm(false);}}>Otkaži</button>
               </div>
-              <div className="muted" style={{fontSize:12}}>Options: {pollOptions.length} / 7</div>
+              <div className="muted" style={{fontSize:12}}>Opcije: {pollOptions.length} / 7</div>
             </form>
             {message && <div style={{marginTop:8,fontSize:13}}>{message}</div>}
           </Modal>
@@ -927,7 +924,7 @@ function ManagerDashboard({ user, activeTab = 'home' }) {
   }
 
   return (
-    <div className="card"><div className="muted">Unsupported view.</div></div>
+    <div className="card"><div className="muted">Nepodržan prikaz.</div></div>
   );
   // (Old dashboard code removed in simplified design)
 }
@@ -943,7 +940,7 @@ function AddApartmentForm({ buildingId, onApartmentCreated }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!unitNumber.trim()) {
-      setError('Unit number is required.');
+      setError('Broj stana je obavezan.');
       return;
     }
     setLoading(true);
@@ -961,38 +958,38 @@ function AddApartmentForm({ buildingId, onApartmentCreated }) {
         setNumPeople('');
         if (onApartmentCreated) onApartmentCreated(data);
       } else {
-        setError(data.message || 'Failed to create apartment.');
+        setError(data.message || 'Kreiranje stana neuspelo.');
       }
     } catch (err) {
-      setError('Error creating apartment.');
+      setError('Greška pri kreiranju stana.');
     }
     setLoading(false);
   };
 
   return (
     <form onSubmit={handleSubmit} style={{ marginBottom: 16 }}>
-      <h4>Add Apartment/Unit</h4>
+      <h4>Dodaj stan</h4>
       <input
         type="text"
-        placeholder="Unit Number"
+        placeholder="Broj stana"
         value={unitNumber}
         onChange={e => setUnitNumber(e.target.value)}
         required
       />
       <input
         type="text"
-        placeholder="Address (optional)"
+        placeholder="Adresa (opciono)"
         value={address}
         onChange={e => setAddress(e.target.value)}
       />
       <input
         type="number"
-        placeholder="Number of People (optional)"
+        placeholder="Broj ljudi (opciono)"
         value={numPeople}
         onChange={e => setNumPeople(e.target.value)}
         min={1}
       />
-      <button type="submit" disabled={loading}>Add Apartment</button>
+      <button type="submit" disabled={loading}>Dodaj stan</button>
       {error && <div style={{ color: 'red' }}>{error}</div>}
     </form>
   );

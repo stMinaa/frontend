@@ -45,7 +45,7 @@ function AssociateProfile({ user, token }) {
       {/* Left sidebar - Blue gradient */}
       <div style={{
         width: 220,
-        background: 'linear-gradient(180deg, #4A90E2 0%, #7CB8F7 100%)',
+        background: '#3498db',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',

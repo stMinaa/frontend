@@ -29,10 +29,14 @@ function Dashboard({ user, activeTab, onTabChange, onLogout }) {
       return <DirectorDashboard user={user} activeTab={activeTab} />;
     }
 
+    // Manager tabs
+    if (role === 'manager') {
+      return <ManagerDashboard user={user} activeTab={activeTab} />;
+    }
+
     // Dashboard tab - show role-specific dashboard
     if (activeTab === 'dashboard') {
       if (role === 'tenant') return <TenantDashboard user={user} />;
-      if (role === 'manager') return <ManagerDashboard user={user} />;
       if (role === 'associate') return <AssociateDashboard user={user} />;
     }
 

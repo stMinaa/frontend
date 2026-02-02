@@ -37,7 +37,7 @@ function ManagerProfile({ user, token }) {
     <div style={{ display: 'flex', minHeight: '100vh', fontFamily: 'Arial, sans-serif' }}>
       <div style={{
         width: 220,
-        background: 'linear-gradient(180deg, #9B7EBD 0%, #C8B6E2 100%)',
+        background: '#9b59b6',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',

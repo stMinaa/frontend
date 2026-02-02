@@ -40,7 +40,7 @@ function Home({ onNavigate }) {
               fontWeight: 500
             }}
           >
-            Home
+            Početna
           </button>
           <button
             onClick={() => onNavigate('login')}
@@ -55,7 +55,7 @@ function Home({ onNavigate }) {
               fontWeight: 500
             }}
           >
-            Login
+            Prijava
           </button>
         </div>
       </div>
@@ -89,7 +89,7 @@ function Home({ onNavigate }) {
           fontWeight: 300,
           maxWidth: 700
         }}>
-          Tennet's assembly and building management
+          Upravljanje stanovima i zgradama
         </p>
         <button
           onClick={() => onNavigate('login')}
@@ -102,13 +102,12 @@ function Home({ onNavigate }) {
             borderRadius: 8,
             cursor: 'pointer',
             fontWeight: 'bold',
-            boxShadow: '0 4px 15px rgba(39, 174, 96, 0.4)',
-            transition: 'transform 0.2s'
+            transition: 'background 0.3s, transform 0.2s'
           }}
           onMouseOver={(e) => e.target.style.transform = 'scale(1.05)'}
           onMouseOut={(e) => e.target.style.transform = 'scale(1)'}
         >
-          Get Started
+          Započni
         </button>
       </div>
     </VideoBackground>

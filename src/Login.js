@@ -12,7 +12,7 @@ function Login({ onLogin, onNavigate }) {
     setError('');
 
     if (!username.trim() || !password.trim()) {
-      setError('Username and password are required');
+      setError('Korisničko ime i lozinka su obavezni');
       return;
     }
 
@@ -28,7 +28,7 @@ function Login({ onLogin, onNavigate }) {
       const data = await response.json();
 
       if (!response.ok) {
-        setError(data.message || 'Login failed');
+        setError(data.message || 'Prijava neuspešna');
         return;
       }
 
@@ -36,7 +36,7 @@ function Login({ onLogin, onNavigate }) {
       // User object will be managed by App component state
       onLogin(data.token, data.user);
     } catch (err) {
-      setError('Connection error. Is the backend running on port 5000?');
+      setError('Greška prilikom konekcije. Da li backend radi na portu 5000?');
       console.error(err);
     } finally {
       setLoading(false);
@@ -84,7 +84,7 @@ function Login({ onLogin, onNavigate }) {
               fontWeight: 500
             }}
           >
-            Home
+            Početna
           </button>
         </div>
       </div>
@@ -101,7 +101,7 @@ function Login({ onLogin, onNavigate }) {
           background: 'white',
           padding: '40px 50px',
           borderRadius: 12,
-          boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
+          backdropFilter: 'blur(10px)',
           width: '100%',
           maxWidth: 400
         }}>
@@ -111,14 +111,14 @@ function Login({ onLogin, onNavigate }) {
             fontSize: 28,
             color: '#2c3e50'
           }}>
-            Log In
+            Prijava
           </h2>
 
           <form onSubmit={handleSubmit}>
             <div style={{ marginBottom: 20 }}>
               <input
                 type="text"
-                placeholder="Username or Email"
+                placeholder="Korisničko ime ili Email"
                 value={username}
                 onChange={e => setUsername(e.target.value)}
                 disabled={loading}
@@ -136,7 +136,7 @@ function Login({ onLogin, onNavigate }) {
             <div style={{ marginBottom: 25 }}>
               <input
                 type="password"
-                placeholder="Password"
+                placeholder="Lozinka"
                 value={password}
                 onChange={e => setPassword(e.target.value)}
                 disabled={loading}
@@ -169,7 +169,7 @@ function Login({ onLogin, onNavigate }) {
               onMouseOver={(e) => !loading && (e.target.style.background = '#229954')}
               onMouseOut={(e) => !loading && (e.target.style.background = '#27ae60')}
             >
-              {loading ? 'Logging in...' : 'Log In'}
+              {loading ? 'Prijavljujem...' : 'Prijavi se'}
             </button>
 
             {error && (
@@ -189,7 +189,7 @@ function Login({ onLogin, onNavigate }) {
               fontSize: 15,
               color: '#7f8c8d'
             }}>
-              Don't have an account?{' '}
+              Nemate nalog?{' '}
               <button
                 type="button"
                 onClick={() => onNavigate('signup')}
@@ -204,7 +204,7 @@ function Login({ onLogin, onNavigate }) {
                   fontWeight: 500
                 }}
               >
-                Sign Up
+                Registruj se
               </button>
             </div>
           </form>
