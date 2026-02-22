@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-function DirectorProfile({ user, token }) {
+function DirectorProfile({ user, token, onUserUpdate }) {
   const [firstName, setFirstName] = useState(user?.firstName || '');
   const [lastName, setLastName] = useState(user?.lastName || '');
   const [mobile, setMobile] = useState(user?.mobile || '');
@@ -16,17 +16,30 @@ function DirectorProfile({ user, token }) {
     if (!firstName.trim()) { setError('Ime je obavezno.'); return; }
     if (!lastName.trim()) { setError('Prezime je obavezno.'); return; }
     if (mobile && !/^\d{7,15}$/.test(mobile)) { setError('Broj telefona mora imati 7-15 cifara.'); return; }
+    
+    const authToken = token || localStorage.getItem('token');
+    if (!authToken) {
+      setError('Niste prijavljeni. Molimo prijavite se ponovo.');
+      return;
+    }
+    
     setLoading(true);
     try {
       const res = await fetch('http://localhost:5000/api/auth/me', {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken },
         body: JSON.stringify({ firstName, lastName, mobile })
       });
       const data = await res.json();
       if (res.ok) {
         setSuccess('Profil ažuriran!');
-        if (data.user) localStorage.setItem('user', JSON.stringify(data.user));
+        if (data.user) {
+          localStorage.setItem('user', JSON.stringify(data.user));
+          setFirstName(data.user.firstName || '');
+          setLastName(data.user.lastName || '');
+          setMobile(data.user.mobile || '');
+          if (onUserUpdate) onUserUpdate(data.user);
+        }
         setEditing(false);
       } else setError(data.message || 'Greška pri ažuriranju.');
     } catch {
@@ -41,7 +54,7 @@ function DirectorProfile({ user, token }) {
     <div style={{ display: 'flex', minHeight: '100vh', fontFamily: 'Arial, sans-serif' }}>
       <div style={{
         width: 220,
-        background: '#95a5a6',
+        background: '#aab1af',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
@@ -75,15 +88,15 @@ function DirectorProfile({ user, token }) {
       </div>
 
       <div style={{ flex: 1, padding: 0, background: '#f8f9fa' }}>
-        <h2 style={{ fontSize: 28, fontWeight: 300, letterSpacing: 4, margin: '40px 0 40px 40px', color: '#2c3e50' }}>
+        <h2 style={{ fontSize: 28, fontWeight: 300, letterSpacing: 4, margin: '40px 0 40px 40px', color: '#2c3e50', textAlign: 'left' }}>
           INFORMACIJE
         </h2>
 
-        {success && <div style={{ padding: 12, background: '#d4edda', color: '#155724', borderRadius: 6, marginBottom: 20 }}>{success}</div>}
-        {error && <div style={{ padding: 12, background: '#f8d7da', color: '#721c24', borderRadius: 6, marginBottom: 20 }}>{error}</div>}
-
         {editing ? (
           <form onSubmit={handleUpdate} style={{ marginLeft: 40 }}>
+            {success && <div style={{ padding: 12, background: '#d4edda', color: '#155724', borderRadius: 6, marginBottom: 20, maxWidth: 800 }}>{success}</div>}
+            {error && <div style={{ padding: 12, background: '#f8d7da', color: '#721c24', borderRadius: 6, marginBottom: 20, maxWidth: 800 }}>{error}</div>}
+            
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 30, maxWidth: 800 }}>
               <div>
                 <label style={{ display: 'block', fontSize: 16, color: '#2c3e50', marginBottom: 8 }}>Ime</label>
@@ -99,7 +112,7 @@ function DirectorProfile({ user, token }) {
               </div>
             </div>
             <div style={{ marginTop: 30 }}>
-              <button type="submit" disabled={loading} style={{ padding: '12px 30px', background: '#95A5A6', color: 'white', border: 'none', borderRadius: 6, cursor: 'pointer', marginRight: 10, fontSize: 14 }}>
+              <button type="submit" disabled={loading} style={{ padding: '12px 30px', background: '#6c737b', color: 'white', border: 'none', borderRadius: 6, cursor: 'pointer', marginRight: 10, fontSize: 14 }}>
                 {loading ? 'Čuvanje...' : 'Sačuvaj'}
               </button>
               <button type="button" onClick={() => setEditing(false)} style={{ padding: '12px 30px', background: '#6c757d', color: 'white', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 14 }}>

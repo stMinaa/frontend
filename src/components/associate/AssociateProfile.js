@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 
-function AssociateProfile({ user, token }) {
+function AssociateProfile({ user, token, onUserUpdate }) {
   const [editing, setEditing] = useState(false);
   const [firstName, setFirstName] = useState(user?.firstName || '');
   const [lastName, setLastName] = useState(user?.lastName || '');
   const [mobile, setMobile] = useState(user?.mobile || '');
+  const [company, setCompany] = useState(user?.company || '');
   const [success, setSuccess] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -19,17 +20,27 @@ function AssociateProfile({ user, token }) {
     if (!lastName.trim()) { setError('Prezime je obavezno.'); return; }
     if (mobile && !/^\d{7,15}$/.test(mobile)) { setError('Broj telefona mora imati 7-15 cifara.'); return; }
 
+    const authToken = token || localStorage.getItem('token');
+    if (!authToken) { setError('Niste prijavljeni.'); return; }
+
     setLoading(true);
     try {
       const res = await fetch('http://localhost:5000/api/auth/me', {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-        body: JSON.stringify({ firstName, lastName, mobile })
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken },
+        body: JSON.stringify({ firstName, lastName, mobile, company })
       });
       const data = await res.json();
       if (res.ok) {
         setSuccess('Profil ažuriran!');
-        if (data.user) localStorage.setItem('user', JSON.stringify(data.user));
+        if (data.user) {
+          localStorage.setItem('user', JSON.stringify(data.user));
+          setFirstName(data.user.firstName || '');
+          setLastName(data.user.lastName || '');
+          setMobile(data.user.mobile || '');
+          setCompany(data.user.company || '');
+          if (onUserUpdate) onUserUpdate(data.user);
+        }
         setEditing(false);
       } else {
         setError(data.message || 'Greška pri ažuriranju.');
@@ -45,7 +56,7 @@ function AssociateProfile({ user, token }) {
       {/* Left sidebar - Blue gradient */}
       <div style={{
         width: 220,
-        background: '#3498db',
+        background: '#74a1c9',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
@@ -80,15 +91,15 @@ function AssociateProfile({ user, token }) {
 
       {/* Main content */}
       <div style={{ flex: 1, padding: 0, background: '#f8f9fa' }}>
-        <h2 style={{ fontSize: 28, fontWeight: 300, letterSpacing: 4, margin: '40px 0 40px 40px', color: '#2c3e50' }}>
-          ELEKTRO VANJA
+        <h2 style={{ fontSize: 28, fontWeight: 300, letterSpacing: 4, margin: '40px 0 40px 40px', color: '#2c3e50', textAlign: 'left' }}>
+          INFORMACIJE
         </h2>
-
-        {success && <div style={{ padding: 12, background: '#d4edda', color: '#155724', borderRadius: 6, marginBottom: 20 }}>{success}</div>}
-        {error && <div style={{ padding: 12, background: '#f8d7da', color: '#721c24', borderRadius: 6, marginBottom: 20 }}>{error}</div>}
 
         {editing ? (
           <form onSubmit={handleUpdate} style={{ marginLeft: 40 }}>
+            {success && <div style={{ padding: 12, background: '#d4edda', color: '#155724', borderRadius: 6, marginBottom: 20, maxWidth: 800 }}>{success}</div>}
+            {error && <div style={{ padding: 12, background: '#f8d7da', color: '#721c24', borderRadius: 6, marginBottom: 20, maxWidth: 800 }}>{error}</div>}
+            
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 30, maxWidth: 800 }}>
               <div>
                 <label style={{ display: 'block', fontSize: 16, color: '#2c3e50', marginBottom: 8 }}>Ime</label>
@@ -115,6 +126,17 @@ function AssociateProfile({ user, token }) {
                   value={mobile}
                   onChange={(e) => setMobile(e.target.value)}
                   style={{ width: '100%', padding: 12, border: '1px solid #ddd', borderRadius: 6, fontSize: 14 }}
+                  placeholder="+381 60 123 4567"
+                />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: 16, color: '#2c3e50', marginBottom: 8 }}>Ime firme</label>
+                <input
+                  type="text"
+                  value={company}
+                  onChange={(e) => setCompany(e.target.value)}
+                  style={{ width: '100%', padding: 12, border: '1px solid #ddd', borderRadius: 6, fontSize: 14 }}
+                  placeholder="SERVIS DOO"
                 />
               </div>
             </div>
@@ -122,7 +144,7 @@ function AssociateProfile({ user, token }) {
               <button
                 type="submit"
                 disabled={loading}
-                style={{ padding: '12px 30px', background: '#4A90E2', color: 'white', border: 'none', borderRadius: 6, cursor: 'pointer', marginRight: 10, fontSize: 14 }}
+                style={{ padding: '12px 30px', background: '#476078', color: 'white', border: 'none', borderRadius: 6, cursor: 'pointer', marginRight: 10, fontSize: 14 }}
               >
                 {loading ? 'Čuvanje...' : 'Sačuvaj'}
               </button>
@@ -151,7 +173,11 @@ function AssociateProfile({ user, token }) {
             </div>
             <div>
               <div style={{ fontSize: 16, color: '#2c3e50', marginBottom: 8, fontWeight: 500 }}>Broj telefona</div>
-              <div style={{ fontSize: 16, color: '#95a5a6' }}>{mobile || '3814569875'}</div>
+              <div style={{ fontSize: 16, color: '#95a5a6' }}>{mobile || 'Nije uneto'}</div>
+            </div>
+            <div>
+              <div style={{ fontSize: 16, color: '#2c3e50', marginBottom: 8, fontWeight: 500 }}>Ime firme</div>
+              <div style={{ fontSize: 16, color: '#95a5a6' }}>{company || 'Nije uneto'}</div>
             </div>
           </div>
         )}

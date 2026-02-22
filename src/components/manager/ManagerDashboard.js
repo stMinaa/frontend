@@ -1,30 +1,32 @@
+/* eslint-disable max-lines, max-lines-per-function, complexity, max-depth, no-console, no-mixed-operators, react/no-array-index-key */
 import React, { useState, useEffect } from 'react';
+
+import Modal from '../Modal';
+import PieChart from '../PieChart';
 import ManagerProfile from './ManagerProfile';
-import PieChart from './components/PieChart';
-import Modal from './components/Modal';
 
 function ManagerDashboard({ user, activeTab = 'home' }) {
   // Bulk apartment creation state
-  const [showBulkForm, setShowBulkForm] = useState(false);
+  const [_showBulkForm, setShowBulkForm] = useState(false);
   const [bulkFloors, setBulkFloors] = useState('');
   const [bulkUnits, setBulkUnits] = useState('');
   const [bulkStartNumber, setBulkStartNumber] = useState('1');
-  const [bulkError, setBulkError] = useState('');
-  const [bulkLoading, setBulkLoading] = useState(false);
+  const [_bulkError, setBulkError] = useState('');
+  const [_bulkLoading, setBulkLoading] = useState(false);
 
   // Bulk create handler
-  const handleBulkCreate = async (e) => {
+  const _handleBulkCreate = async (e) => {
     e.preventDefault();
     setBulkError('');
     setBulkLoading(true);
     // Parse floors and units per floor
-    let floors = parseInt(bulkFloors);
+    const floors = parseInt(bulkFloors);
     if (isNaN(floors) || floors < 1) {
       setBulkError('Unesite validan broj spratova.');
       setBulkLoading(false);
       return;
     }
-    let startNumber = parseInt(bulkStartNumber);
+    const startNumber = parseInt(bulkStartNumber);
     if (isNaN(startNumber) || startNumber < 1) {
       setBulkError('Unesite validan početni broj stana.');
       setBulkLoading(false);
@@ -74,18 +76,15 @@ function ManagerDashboard({ user, activeTab = 'home' }) {
   };
   const [buildings, setBuildings] = useState([]);
   const [selectedBuilding, setSelectedBuilding] = useState(null);
-  const [apartments, setApartments] = useState([]);
+  const [_apartments, setApartments] = useState([]);
   const [tenants, setTenants] = useState([]);
   const [pendingTenants, setPendingTenants] = useState([]);
   const [message, setMessage] = useState('');
   const [globalPendingTenants, setGlobalPendingTenants] = useState([]);
   // Legacy single-select states (no longer used in the new table UI)
-  const [assignBuilding, setAssignBuilding] = useState('');
-  const [assignApartment, setAssignApartment] = useState('');
-  const [assignBuildingApartments, setAssignBuildingApartments] = useState([]);
-  // New: search and per-row selections for global pending tenants
-  const [pendingQuery, setPendingQuery] = useState('');
-  const [assignRows, setAssignRows] = useState({}); // { [tenantId]: { buildingId, apartmentId } }
+  const [assignBuilding] = useState('');
+  const [, setAssignApartment] = useState('');
+  const [, setAssignBuildingApartments] = useState([]);
   const [apartmentsCache, setApartmentsCache] = useState({}); // { [buildingId]: Apartment[] }
 
   // Poll state & modal
@@ -97,7 +96,7 @@ function ManagerDashboard({ user, activeTab = 'home' }) {
   const [showNoticeModal, setShowNoticeModal] = useState(false);
   // Notices state
   const [notices, setNotices] = useState([]);
-  const [noticesLoading, setNoticesLoading] = useState(false);
+  const [, setNoticesLoading] = useState(false);
   const [noticeContent, setNoticeContent] = useState('');
   const [noticeMsg, setNoticeMsg] = useState('');
   // Issues state
@@ -144,10 +143,10 @@ function ManagerDashboard({ user, activeTab = 'home' }) {
         });
         const data = await res.json();
         if (res.ok) {
-          setBuildings(data);
+          setBuildings(data.data);
           // Auto-select first building to avoid double selection UX
-          if (!selectedBuilding && Array.isArray(data) && data.length > 0) {
-            setSelectedBuilding(data[0]);
+          if (!selectedBuilding && Array.isArray(data.data) && data.data.length > 0) {
+            setSelectedBuilding(data.data[0]);
           }
         }
         else setMessage(data.message || 'Učitavanje zgrada neuspelo.');
@@ -161,13 +160,14 @@ function ManagerDashboard({ user, activeTab = 'home' }) {
             headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
           });
           const assocData = await resAssoc.json();
-          if (resAssoc.ok) setAssociates(assocData);
+          if (resAssoc.ok) setAssociates(assocData.data);
         } catch (_) {}
       } catch (err) {
         setMessage('Greška pri učitavanju zgrada ili stanara na čekanju.');
       }
     }
     fetchBuildingsAndPending();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // When choosing a building in the Assign Pending Tenants section, load its apartments
@@ -179,7 +179,7 @@ function ManagerDashboard({ user, activeTab = 'home' }) {
           headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
         });
         const data = await res.json();
-        if (res.ok) setAssignBuildingApartments(data);
+        if (res.ok) setAssignBuildingApartments(data.data);
         else setAssignBuildingApartments([]);
       } catch (_) {
         setAssignBuildingApartments([]);
@@ -188,8 +188,32 @@ function ManagerDashboard({ user, activeTab = 'home' }) {
     fetchAssignApts();
   }, [assignBuilding]);
 
+  // Load issues for Kvarovi tab when needed
+  useEffect(() => {
+    async function fetchAllIssues() {
+      if (tab !== 'kvarovi' || !buildings.length) return;
+      setIssueLoading(true);
+      setIssueError('');
+      try {
+        const res = await fetch('http://localhost:5000/api/issues', {
+          headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
+        });
+        const data = await res.json();
+        if (res.ok) {
+          setIssues(data.data || []);
+        } else {
+          setIssueError(data.message || 'Učitavanje kvarova neuspelo.');
+        }
+      } catch (err) {
+        setIssueError('Greška pri učitavanju kvarova.');
+      }
+      setIssueLoading(false);
+    }
+    fetchAllIssues();
+  }, [tab, buildings]);
+
   // Helper: ensure apartments for a building are cached
-  const ensureAptsInCache = async (buildingId) => {
+  const _ensureAptsInCache = async (buildingId) => {
     if (!buildingId) return [];
     if (apartmentsCache[buildingId]) return apartmentsCache[buildingId];
     try {
@@ -221,11 +245,21 @@ function ManagerDashboard({ user, activeTab = 'home' }) {
           headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
         });
         const tenantsData = await resTen.json();
-        if (resTen.ok) setTenants(tenantsData);
+        if (resTen.ok) setTenants(tenantsData.data || []);
         else setMessage(tenantsData.message || 'Učitavanje stanara neuspelo.');
 
-        // No pending tenants endpoint - will show all tenants
-        setPendingTenants([]);
+        // Fetch pending tenants for this building
+        const resPending = await fetch('http://localhost:5000/api/users/pending', {
+          headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
+        });
+        const pendingData = await resPending.json();
+        if (resPending.ok && Array.isArray(pendingData.data)) {
+          // Filter for this building
+          const buildingPending = pendingData.data.filter(t => String(t.building?._id) === String(selectedBuilding._id));
+          setPendingTenants(buildingPending);
+        } else {
+          setPendingTenants([]);
+        }
 
         // Fetch polls for the building
         const resPolls = await fetch(`http://localhost:5000/api/buildings/${selectedBuilding._id}/polls`, {
@@ -263,7 +297,7 @@ function ManagerDashboard({ user, activeTab = 'home' }) {
   }, [selectedBuilding]);
 
   // Assign tenant to apartment (can be used for global assignment)
-  const assignTenant = async (tenantId, apartmentId, buildingId) => {
+  const _assignTenant = async (tenantId, apartmentId, buildingId) => {
     try {
       const res = await fetch(`http://localhost:5000/api/tenants/${tenantId}/assign`, {
         method: 'POST',
@@ -324,7 +358,7 @@ function ManagerDashboard({ user, activeTab = 'home' }) {
       // Refresh tenants for current building
       if (selectedBuilding) {
         fetch(`http://localhost:5000/api/buildings/${selectedBuilding._id}/tenants`, { headers:{'Authorization':'Bearer '+localStorage.getItem('token')} })
-          .then(r=>r.json()).then(setTenants);
+          .then(r=>r.json()).then(d => setTenants(d.data || []));
       }
     } catch (_) {
       setMessage('Odobrenje neuspelo.');
@@ -343,7 +377,7 @@ function ManagerDashboard({ user, activeTab = 'home' }) {
       setMessage('Stanar obrisan.');
       if (selectedBuilding) {
         fetch(`http://localhost:5000/api/buildings/${selectedBuilding._id}/tenants`, { headers:{'Authorization':'Bearer '+localStorage.getItem('token')} })
-          .then(r=>r.json()).then(setTenants);
+          .then(r=>r.json()).then(d => setTenants(d.data || []));
       }
     } catch (_) {
       setMessage('Brisanje neuspelo.');
@@ -493,6 +527,161 @@ function ManagerDashboard({ user, activeTab = 'home' }) {
       <div className="card" style={{minHeight:'40vh',display:'flex',flexDirection:'column',justifyContent:'center',alignItems:'center'}}>
         <h2 style={{margin:0}}>Početna</h2>
         <div className="muted" style={{marginTop:8}}>Izaberite "Zgrade" da upravljate Vašim zgradama.</div>
+      </div>
+    );
+  }
+
+  // ============= KVAROVI TAB =============
+  if (tab === 'kvarovi') {
+    // Manager triage: only show newly reported issues; once assigned/forwarded/rejected they disappear from this view  
+    const triage = issues.filter(i => (i.status || 'reported').toLowerCase() === 'reported');
+    const filtered = triage.filter(i => issueUrgency === 'all' ? true : (issueUrgency === 'urgent' ? i.priority === 'high' : i.priority !== 'high'));
+
+    return (
+      <div style={{maxWidth:1400,margin:'0 auto',padding:'32px 40px'}}>
+        <h2 style={{margin:'0 0 24px 0',fontSize:28,fontWeight:600}}>Kvarovi za obradu</h2>
+        <div style={{display:'flex',gap:8,alignItems:'center',flexWrap:'wrap',margin:'6px 0 24px'}}>
+          <button className={`btn-flat ${issueUrgency==='all'?'btn-flat-primary':'btn-flat-outline'}`} onClick={()=>setIssueUrgency('all')}>Sve</button>
+          <button 
+            className={`btn-flat ${issueUrgency==='urgent'?'btn-flat-primary':'btn-flat-outline'}`} 
+            onClick={()=>setIssueUrgency('urgent')}
+            style={{border: '2px solid #dc3545', color: issueUrgency==='urgent' ? '#fff' : '#dc3545'}}
+          >
+            Hitno
+          </button>
+          <button 
+            className={`btn-flat ${issueUrgency==='not-urgent'?'btn-flat-primary':'btn-flat-outline'}`} 
+            onClick={()=>setIssueUrgency('not-urgent')}
+            style={{border: '2px solid #28a745', color: issueUrgency==='not-urgent' ? '#fff' : '#28a745'}}
+          >
+            Nije hitno
+          </button>
+          <div className="muted" style={{marginLeft:8,fontSize:14}}>{filtered.length} od {triage.length}</div>
+        </div>
+        
+        {issueLoading && <div>Učitava...</div>}
+        {issueError && <div style={{color:'#dc3545',padding:16,border:'1px solid #dc3545',borderRadius:6,marginBottom:16}}>{issueError}</div>}
+        
+        {!issueLoading && filtered.length === 0 && (
+          <div className="card" style={{textAlign:'center',padding:32}}>
+            <div className="muted">Nema kvarova za obradu.</div>
+          </div>
+        )}
+
+        <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(320px,1fr))',gap:24}}>
+          {filtered.map(issue => (
+            <div key={issue._id} className="card" style={{padding:20}}>
+              <div style={{fontSize:20,fontWeight:700,marginBottom:12,color:'#2c3e50'}}>{issue.title}</div>
+              
+              <div style={{marginBottom:8}}>
+                <span style={{fontSize:12,color:'#6c757d',textTransform:'uppercase',letterSpacing:'0.5px'}}>Prioritet:</span>
+                <div style={{marginTop:4}}>
+                  <span className={`badge ${issue.priority === 'high' ? 'urgent' : issue.priority === 'medium' ? 'medium' : 'low'}`}>
+                    {issue.priority === 'high' ? 'Visok' : issue.priority === 'medium' ? 'Srednji' : 'Nizak'}
+                  </span>
+                </div>
+              </div>
+
+              <div style={{marginBottom:12}}>
+                <span style={{fontSize:12,color:'#6c757d',textTransform:'uppercase',letterSpacing:'0.5px'}}>Opis:</span>
+                <div style={{marginTop:4,color:'#495057',lineHeight:1.4}}>{issue.description}</div>
+              </div>
+
+              <div style={{marginBottom:8}}>
+                <span style={{fontSize:12,color:'#6c757d',textTransform:'uppercase',letterSpacing:'0.5px'}}>Lokacija:</span>
+                <div style={{marginTop:4,color:'#6c757d',fontSize:14}}>
+                  {issue.building ? (issue.building.name ? `${issue.building.name}, ${issue.building.address}` : issue.building.address) : ''}
+                </div>
+              </div>
+
+              <div style={{marginBottom:16}}>
+                <span style={{fontSize:12,color:'#6c757d',textTransform:'uppercase',letterSpacing:'0.5px'}}>Stan:</span>
+                <div style={{marginTop:4,color:'#6c757d',fontSize:14}}>{issue.apartment ? `Stan ${issue.apartment.unitNumber}` : '-'}</div>
+              </div>
+
+              <div style={{display:'flex',flexDirection:'column',gap:8}}>
+                <select 
+                  value={assignPick[issue._id] || ''} 
+                  onChange={e => setAssignPick(prev => ({ ...prev, [issue._id]: e.target.value }))} 
+                  style={{padding:'8px 12px',border:'1px solid #d0d7de',borderRadius:4,fontSize:14}}
+                >
+                  <option value="">Izaberi akciju...</option>
+                  <option value="director">Prosledi direktoru</option>
+                  {associates.map(a => (
+                    <option key={a.username} value={a.username}>
+                      Dodeli: {`${a.firstName || ''} ${a.lastName || ''}`.trim()}{a.company ? ` — ${a.company}` : ''}
+                    </option>
+                  ))}
+                </select>
+
+                <div style={{display:'flex',gap:8}}>
+                  <button 
+                    className="btn-flat btn-flat-primary" 
+                    disabled={!assignPick[issue._id]} 
+                    onClick={async()=>{
+                      const action = assignPick[issue._id];
+                      try {
+                        if (action === 'director') {
+                          // Forward to director
+                          const res = await fetch(`http://localhost:5000/api/issues/${issue._id}/triage`, {
+                            method: 'PATCH',
+                            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + localStorage.getItem('token') },
+                            body: JSON.stringify({ action: 'forward' })
+                          });
+                          if (res.ok) {
+                            setMessage('Kvar prosleđen direktoru.');
+                            setIssues(prev => prev.filter(i => i._id !== issue._id));
+                            setAssignPick(prev => {const {[issue._id]:_, ...rest} = prev; return rest;});
+                          }
+                        } else {
+                          // Assign to associate  
+                          const res = await fetch(`http://localhost:5000/api/issues/${issue._id}/triage`, {
+                            method: 'PATCH',
+                            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + localStorage.getItem('token') },
+                            body: JSON.stringify({ action: 'assign', assignedTo: action })
+                          });
+                          if (res.ok) {
+                            setMessage('Kvar dodeljen saradniku.');
+                            setIssues(prev => prev.filter(i => i._id !== issue._id));
+                            setAssignPick(prev => {const {[issue._id]:_, ...rest} = prev; return rest;});
+                          }
+                        }
+                      } catch (err) {
+                        setMessage('Greška pri obradi kvara.');
+                      }
+                    }}
+                    style={{flex:1}}
+                  >
+                    Potvrdi
+                  </button>
+                  
+                  <button 
+                    className="btn-flat btn-flat-outline" 
+                    onClick={async()=>{
+                      if (!window.confirm('Odbaciti ovaj kvar? Ova akcija se ne može poništiti.')) return;
+                      try {
+                        const res = await fetch(`http://localhost:5000/api/issues/${issue._id}/triage`, {
+                          method: 'PATCH',
+                          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + localStorage.getItem('token') },
+                          body: JSON.stringify({ action: 'reject' })
+                        });
+                        if (res.ok) {
+                          setMessage('Kvar odbačen.');
+                          setIssues(prev => prev.filter(i => i._id !== issue._id));
+                          setAssignPick(prev => {const {[issue._id]:_, ...rest} = prev; return rest;});
+                        }
+                      } catch (err) {
+                        setMessage('Greška pri odbacivanju kvara.');
+                      }
+                    }}
+                  >
+                    Odbaci
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     );
   }
@@ -651,10 +840,10 @@ function ManagerDashboard({ user, activeTab = 'home' }) {
                           const res = await fetch(`http://localhost:5000/api/tenants/${t._id}`, { method:'DELETE', headers:{'Authorization':'Bearer '+localStorage.getItem('token')} });
                           if (res.ok) {
                             // refresh tenants & apartments & pending
-                            fetch(`http://localhost:5000/api/buildings/${selectedBuilding._id}/tenants`, { headers:{'Authorization':'Bearer '+localStorage.getItem('token')} }).then(r=>r.json()).then(setTenants);
+                            fetch(`http://localhost:5000/api/buildings/${selectedBuilding._id}/tenants`, { headers:{'Authorization':'Bearer '+localStorage.getItem('token')} }).then(r=>r.json()).then(d=>setTenants(d.data||[]));
                             fetch(`http://localhost:5000/api/buildings/${selectedBuilding._id}/apartments`, { headers:{'Authorization':'Bearer '+localStorage.getItem('token')} }).then(r=>r.json()).then(a=>{
-                              setApartments(a);
-                              setApartmentsCache(prev=>({...prev,[selectedBuilding._id]:a}));
+                              setApartments(a.data||[]);
+                              setApartmentsCache(prev=>({...prev,[selectedBuilding._id]:a.data||[]}));
                             });
                           }
                         } catch(_) {}
@@ -709,8 +898,20 @@ function ManagerDashboard({ user, activeTab = 'home' }) {
         <h3 style={{marginTop:0}}>Kvarovi u zgradi</h3>
         <div style={{display:'flex',gap:8,alignItems:'center',flexWrap:'wrap',margin:'6px 0 16px'}}>
           <button className={`btn-flat ${issueUrgency==='all'?'btn-flat-primary':'btn-flat-outline'}`} onClick={()=>setIssueUrgency('all')}>Sve</button>
-          <button className={`btn-flat ${issueUrgency==='urgent'?'btn-flat-primary':'btn-flat-outline'}`} onClick={()=>setIssueUrgency('urgent')}>Hitno</button>
-          <button className={`btn-flat ${issueUrgency==='not-urgent'?'btn-flat-primary':'btn-flat-outline'}`} onClick={()=>setIssueUrgency('not-urgent')}>Nije hitno</button>
+          <button 
+            className={`btn-flat ${issueUrgency==='urgent'?'btn-flat-primary':'btn-flat-outline'}`} 
+            onClick={()=>setIssueUrgency('urgent')}
+            style={{border: '2px solid #dc3545', color: issueUrgency==='urgent' ? '#fff' : '#dc3545'}}
+          >
+            Hitno
+          </button>
+          <button 
+            className={`btn-flat ${issueUrgency==='not-urgent'?'btn-flat-primary':'btn-flat-outline'}`} 
+            onClick={()=>setIssueUrgency('not-urgent')}
+            style={{border: '2px solid #28a745', color: issueUrgency==='not-urgent' ? '#fff' : '#28a745'}}
+          >
+            Nije hitno
+          </button>
           <div className="muted" style={{marginLeft:8,fontSize:12}}>{filtered.length} of {triage.length}</div>
         </div>
         {filtered.length===0 && <div className="muted">Nema kvarova za obradu.</div>}
@@ -737,7 +938,7 @@ function ManagerDashboard({ user, activeTab = 'home' }) {
                   </select>
                   <button className="btn-flat btn-flat-primary" disabled={!assignPick[issue._id]} onClick={async()=>{
                     try {
-                      const res = await fetch(`http://localhost:5000/api/issues/${issue._id}/triage`, { method:'PATCH', headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('token')}, body: JSON.stringify({ action: 'assign', associateId: assignPick[issue._id] }) });
+                      const res = await fetch(`http://localhost:5000/api/issues/${issue._id}/triage`, { method:'PATCH', headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('token')}, body: JSON.stringify({ action: 'assign', assignedTo: assignPick[issue._id] }) });
                       if (res.ok) {
                         // Optimistically remove from triage list
                         setIssues(prev => prev.filter(i => i._id !== issue._id));
@@ -930,7 +1131,7 @@ function ManagerDashboard({ user, activeTab = 'home' }) {
 }
 
 // Add Apartment Form component
-function AddApartmentForm({ buildingId, onApartmentCreated }) {
+function _AddApartmentForm({ buildingId, onApartmentCreated }) {
   const [unitNumber, setUnitNumber] = useState('');
   const [address, setAddress] = useState('');
   const [numPeople, setNumPeople] = useState('');

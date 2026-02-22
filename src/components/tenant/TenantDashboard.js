@@ -1,10 +1,11 @@
-
+/* eslint-disable max-lines, max-lines-per-function, complexity, max-depth, no-console, no-mixed-operators, react/no-array-index-key */
 import React, { useState, useEffect, useMemo } from 'react';
-import PieChart from './components/PieChart';
-import TenantProfile from './TenantProfile';
-import Modal from './components/Modal';
 
-function TenantDashboard({ user, tenantNav, setTenantNav }) {
+import Modal from '../Modal';
+import PieChart from '../PieChart';
+import TenantProfile from './TenantProfile';
+
+function TenantDashboard({ user, tenantNav, setTenantNav, onUserUpdate }) {
   const [issue, setIssue] = useState('');
   const [title, setTitle] = useState('');
   const [priority, setPriority] = useState('low');
@@ -14,103 +15,116 @@ function TenantDashboard({ user, tenantNav, setTenantNav }) {
   const [loading, setLoading] = useState(false);
   const [noticeContent, setNoticeContent] = useState('');
   const [notices, setNotices] = useState([]);
-  const [noticesLoading, setNoticesLoading] = useState(false);
+  const [, setNoticesLoading] = useState(false);
   const [showNoticeModal, setShowNoticeModal] = useState(false);
+  const [showIssueModal, setShowIssueModal] = useState(false);
   // Polls state
   const [polls, setPolls] = useState([]);
-  const [pollsLoading, setPollsLoading] = useState(false);
-  const [pollError, setPollError] = useState('');
-  const [pollSuccess, setPollSuccess] = useState('');
+  const [, setPollsLoading] = useState(false);
   const [noticeSort, setNoticeSort] = useState('newest');
   // Issue filters
   const [issueSort, setIssueSort] = useState('newest'); // 'newest' or 'oldest'
-  const [issueStatus, setIssueStatus] = useState('reported'); // 'reported' acts as "all", others filter narrowly
+  const [issueStatus, setIssueStatus] = useState('all'); // 'all' shows all, others filter by specific status
+  const [issueViewFilter, setIssueViewFilter] = useState('my'); // 'all' or 'my'
+  const [allBuildingIssues, setAllBuildingIssues] = useState([]); // For 'all issues' view
     // Stats & changes/micro-feed
-    const [buildingStats, setBuildingStats] = useState(null);
+    const [, setBuildingStats] = useState(null);
     const [changesSince, setChangesSince] = useState(null);
     const [etaAckMsg, setEtaAckMsg] = useState('');
 
   // Get JWT from localStorage (assumes it's stored there after login/signup)
   const token = localStorage.getItem('token');
-
-  // Post-it color mapping to hex for pie palette
-  const POSTIT_COLOR_HEX = {
-    yellow: '#FEF08A',
-    pink: '#FBCFE8',
-    green: '#BBF7D0',
-    blue: '#BAE6FD',
-    purple: '#E9D5FF',
-    orange: '#FED7AA',
-    lime: '#ECFCCB',
-    cyan: '#CFFAFE',
-    rose: '#FFE4E6',
-    violet: '#DDD6FE'
-  };
-  const darkenHex = (hex, amt = 0.1) => {
-    let h = hex.replace('#','');
-    if (h.length === 3) h = h.split('').map(c => c + c).join('');
-    const num = parseInt(h, 16);
-    let r = (num >> 16) & 0xff;
-    let g = (num >> 8) & 0xff;
-    let b = num & 0xff;
-    r = Math.max(0, Math.round(r * (1 - amt)));
-    g = Math.max(0, Math.round(g * (1 - amt)));
-    b = Math.max(0, Math.round(b * (1 - amt)));
-    return `#${(1 << 24 | (r << 16) | (g << 8) | b).toString(16).slice(1)}`;
-  };
-  const shadeSeries = (baseHex, n) => {
-    if (!n || n <= 0) return [];
-    if (n === 1) return [baseHex];
-    const start = 0.05; // slight darken even for first slice to avoid too pale
-    const range = 0.35; // how dark the darkest slice gets
-    const step = n > 1 ? (range / (n - 1)) : 0;
-    return Array.from({ length: n }, (_, i) => darkenHex(baseHex, start + i * step));
-  };
+  console.log('TenantDashboard - Token from localStorage:', token ? 'present' : 'missing', token?.substring(0, 20) + '...');
 
   // Fetch user's reported issues
   useEffect(() => {
     if (!token) return;
+    console.log('🔍 Fetching tenant issues from /api/issues/my');
     setLoading(true);
     fetch('http://localhost:5000/api/issues/my', {
       headers: { 'Authorization': 'Bearer ' + token }
     })
       .then(res => res.json())
       .then(data => {
-        if (Array.isArray(data)) setIssues(data);
+        console.log('✅ Tenant issues received:', Array.isArray(data.data) ? data.data.length : 0, 'issues');
+        if (Array.isArray(data.data)) setIssues(data.data);
         setLoading(false);
       })
-      .catch(() => setLoading(false));
+      .catch((err) => {
+        console.error('❌ Error fetching tenant issues:', err);
+        setLoading(false);
+      });
   }, [token, success]); // refetch on new issue
+
+  // Fetch all building issues when viewing 'all' filter (requires manager+ privileges on backend, but we'll try)
+  useEffect(() => {
+    if (!token || !user?.building || issueViewFilter !== 'all') return;
+    console.log('🔍 Fetching all building issues from /api/issues');
+    // Note: This endpoint might not be accessible to tenants - graceful fallback
+    fetch('http://localhost:5000/api/issues', {
+      headers: { 'Authorization': 'Bearer ' + token }
+    })
+      .then(res => {
+        if (!res.ok) throw new Error('Not authorized');
+        return res.json();
+      })
+      .then(data => {
+        if (Array.isArray(data.data)) {
+          // Filter to only issues from this building
+          const buildingIssues = data.data.filter(issue => 
+            issue.tenant?.building?._id === user.building || 
+            issue.tenant?.building === user.building
+          );
+          console.log('✅ All building issues received:', buildingIssues.length, 'issues');
+          setAllBuildingIssues(buildingIssues);
+        }
+      })
+      .catch(err => {
+        console.log('⚠️ Cannot fetch all building issues:', err);
+        // Fallback to showing only user's issues
+        setAllBuildingIssues(issues);
+      });
+  }, [token, user?.building, issueViewFilter, issues]);
 
   // Fetch notices for building
   useEffect(() => {
     if (!token || !user?.building) return;
+    console.log('🔍 Fetching notices from /api/buildings/' + user.building + '/notices');
     setNoticesLoading(true);
     fetch(`http://localhost:5000/api/buildings/${user.building}/notices`, {
       headers: { 'Authorization': 'Bearer ' + token }
     })
       .then(res => res.json())
       .then(data => {
-        if (Array.isArray(data)) setNotices(data);
+        console.log('✅ Notices received:', Array.isArray(data.data) ? data.data.length : 0, 'notices');
+        if (Array.isArray(data.data)) setNotices(data.data);
         setNoticesLoading(false);
       })
-      .catch(() => setNoticesLoading(false));
+      .catch((err) => {
+        console.error('❌ Error fetching notices:', err);
+        setNoticesLoading(false);
+      });
   }, [token, user?.building]);
 
   // Fetch polls for building
   useEffect(() => {
     if (!token || !user?.building) return;
+    console.log('🔍 Fetching polls from /api/buildings/' + user.building + '/polls');
     setPollsLoading(true);
     fetch(`http://localhost:5000/api/buildings/${user.building}/polls`, {
       headers: { 'Authorization': 'Bearer ' + token }
     })
       .then(res => res.json())
       .then(data => {
-        if (Array.isArray(data)) setPolls(data);
+        console.log('✅ Polls received:', Array.isArray(data.data) ? data.data.length : 0, 'polls');
+        if (Array.isArray(data.data)) setPolls(data.data);
         setPollsLoading(false);
       })
-      .catch(() => setPollsLoading(false));
-  }, [token, user?.building, pollSuccess]);
+      .catch((err) => {
+        console.error('❌ Error fetching polls:', err);
+        setPollsLoading(false);
+      });
+  }, [token, user?.building]);
 
   // Fetch building stats and changes since last visit
   useEffect(() => {
@@ -182,6 +196,15 @@ function TenantDashboard({ user, tenantNav, setTenantNav }) {
         setIssue('');
         setTitle('');
         setPriority('low');
+        setShowIssueModal(false);
+        // Refetch issues
+        const issuesRes = await fetch('http://localhost:5000/api/issues/my', {
+          headers: { 'Authorization': 'Bearer ' + token }
+        });
+        if (issuesRes.ok) {
+          const issuesData = await issuesRes.json();
+          if (Array.isArray(issuesData)) setIssues(issuesData);
+        }
       } else {
         setError(data.message || 'Neuspešno prijavljivanje kvara.');
       }
@@ -223,7 +246,7 @@ function TenantDashboard({ user, tenantNav, setTenantNav }) {
         })
           .then(res => res.json())
           .then(data => {
-            if (Array.isArray(data)) setNotices(data);
+            if (Array.isArray(data.data)) setNotices(data.data);
           });
       } else {
         setError(data.message || 'Neuspešno objavljivanje obaveštenja.');
@@ -275,10 +298,10 @@ function TenantDashboard({ user, tenantNav, setTenantNav }) {
     const st = (s || 'reported').toString().toLowerCase().replace(/-/g, ' ');
     if (st === 'open') return 'Prijavljen';
     if (st === 'reported') return 'Prijavljen';
-    if (st === 'forwarded') return 'Prosleđen';
+    if (st === 'forwarded') return 'Prosleđen direktoru';
     if (st === 'assigned') return 'Dodeljen';
     if (st === 'in progress') return 'U toku';
-    if (st === 'resolved') return 'Rešen';
+    if (st === 'resolved') return 'Završen';
     if (st === 'rejected') return 'Odbijen';
     return st.split(' ').map(w => w ? w[0].toUpperCase() + w.slice(1) : '').join(' ');
   };
@@ -353,7 +376,7 @@ function TenantDashboard({ user, tenantNav, setTenantNav }) {
   if (tenantNav === 'profile') {
     return (
       <div>
-        <TenantProfile user={user} token={token} />
+        <TenantProfile user={user} token={token} onUserUpdate={onUserUpdate} />
       </div>
     );
   }
@@ -440,10 +463,7 @@ function TenantDashboard({ user, tenantNav, setTenantNav }) {
                 <>
                   <div style={{marginTop:4}}>
                     {(() => {
-                      const baseHex = POSTIT_COLOR_HEX[item.color] || '#3A5A40';
                       const data = item.poll.options.map(opt => ({label:opt, value:item.poll.votes.filter(v => v.option===opt).length}));
-                      const cols = shadeSeries(baseHex, data.length);
-                      // Use default PieChart pastel purples/greens/blues palette instead of single-color shades
                       return <PieChart data={data} size={100} />;
                     })()}
                   </div>
@@ -511,44 +531,45 @@ function TenantDashboard({ user, tenantNav, setTenantNav }) {
 
         {(tenantNav === 'issues') && (
           <div>
-            <div className="card" style={{padding:16, marginBottom:16, border:'1px solid #e2e8f0'}}>
-              <h4 style={{marginTop:0}}>Prijavite kvar u zgradi</h4>
-              <form onSubmit={handleReport} style={{display:'grid',gap:8}}>
-                <input placeholder="Kratak naslov (npr. Curenje česme)" value={title} onChange={e=>setTitle(e.target.value)} />
-                <textarea placeholder="Opišite problem..." value={issue} onChange={e=>setIssue(e.target.value)} rows={5} />
-                <div>
-                  <label style={{marginRight:8}}>
-                    <input type="radio" name="priority" value="high" checked={priority === 'high'} onChange={() => setPriority('high')} /> Visok
-                  </label>
-                  <label style={{marginRight:8}}>
-                    <input type="radio" name="priority" value="medium" checked={priority === 'medium'} onChange={() => setPriority('medium')} /> Srednji
-                  </label>
-                  <label>
-                    <input type="radio" name="priority" value="low" checked={priority === 'low'} onChange={() => setPriority('low')} /> Nizak
-                  </label>
-                </div>
-                <div style={{display:'flex',gap:8}}>
-                  <button className="btn-flat btn-flat-primary" type="submit">Prijavi kvar</button>
-                  <button type="button" className="btn-flat btn-flat-outline" onClick={() => { setTitle(''); setIssue(''); setPriority('low'); }}>Obriši polja</button>
-                </div>
-              </form>
-              {error && <div style={{color:'red',marginTop:8}}>{error}</div>}
-              {success && <div style={{color:'green',marginTop:8}}>{success}</div>}
+            <div style={{display:'flex', gap:8, marginBottom:16, flexWrap:'wrap'}}>
+              <button className="btn-flat btn-flat-primary" onClick={() => setShowIssueModal(true)}>Prijavi kvar</button>
             </div>
-            <div className="card-header" style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-              <h4>Vaši kvarovi</h4>
-              <div style={{display:'flex', gap:8, alignItems:'center'}}>
+            {error && <div style={{color:'red',marginTop:8, marginBottom:8}}>{error}</div>}
+            {success && <div style={{color:'green',marginTop:8, marginBottom:8}}>{success}</div>}
+            
+            {/* Issue View Filter: All Issues vs My Issues */}
+            <div style={{display:'flex', gap:12, marginBottom:16, alignItems:'center'}}>
+              <button 
+                className={issueViewFilter === 'my' ? 'btn' : 'btn ghost'}
+                onClick={() => setIssueViewFilter('my')}
+                style={{background: issueViewFilter === 'my' ? '#10b981' : undefined}}
+              >
+                Moji kvarovi
+              </button>
+              <button 
+                className={issueViewFilter === 'all' ? 'btn' : 'btn ghost'}
+                onClick={() => setIssueViewFilter('all')}
+                style={{background: issueViewFilter === 'all' ? '#10b981' : undefined}}
+              >
+                Svi kvarovi u zgradi
+              </button>
+            </div>
+
+            <div className="card-header" style={{display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:12}}>
+              <h4>{issueViewFilter === 'my' ? 'Vaši kvarovi' : 'Svi kvarovi u zgradi'}</h4>
+              <div style={{display:'flex', gap:8, alignItems:'center', flexWrap:'wrap'}}>
                 <label style={{marginRight:4,fontSize:'0.9em'}}>Status:</label>
-                <select value={issueStatus} onChange={e => setIssueStatus(e.target.value)} style={{fontSize:'0.9em'}}>
+                <select value={issueStatus} onChange={e => setIssueStatus(e.target.value)} style={{fontSize:'0.9em',padding:'4px 8px'}}>
+                  <option value="all">Svi statusi</option>
                   <option value="reported">Prijavljen</option>
-                  <option value="forwarded">Prosleđen</option>
+                  <option value="forwarded">Prosleđen direktoru</option>
                   <option value="assigned">Dodeljen</option>
                   <option value="in-progress">U toku</option>
-                  <option value="resolved">Rešen</option>
+                  <option value="resolved">Završen</option>
                   <option value="rejected">Odbijen</option>
                 </select>
-                <label style={{marginLeft:8,marginRight:4,fontSize:'0.9em'}}>Sortiraj po:</label>
-                <select value={issueSort} onChange={e => setIssueSort(e.target.value)} style={{fontSize:'0.9em'}}>
+                <label style={{marginLeft:8,marginRight:4,fontSize:'0.9em'}}>Sortiraj:</label>
+                <select value={issueSort} onChange={e => setIssueSort(e.target.value)} style={{fontSize:'0.9em',padding:'4px 8px'}}>
                   <option value="newest">Najnoviji prvo</option>
                   <option value="oldest">Najstariji prvo</option>
                 </select>
@@ -558,33 +579,47 @@ function TenantDashboard({ user, tenantNav, setTenantNav }) {
               <div>Učitavanje...</div>
             ) : (
               <ul className="issue-list">
-                {issues.length === 0 && <li>Nema prijavljenih kvarova.</li>}
-                {[...issues]
-                  .filter(iss => {
-                    if (issueStatus === 'reported') return true;
-                    const s = (iss.status || 'reported').toLowerCase().replace(/\s+/g,'-');
-                    return s === issueStatus;
-                  })
-                  .sort((a, b) => {
-                    const dateA = new Date(a.createdAt);
-                    const dateB = new Date(b.createdAt);
-                    return issueSort === 'newest' ? dateB - dateA : dateA - dateB;
-                  })
-                  .map((iss) => (
+                {(() => {
+                  const displayIssues = issueViewFilter === 'my' ? issues : allBuildingIssues;
+                  if (displayIssues.length === 0) return <li>Nema prijavljenih kvarova.</li>;
+                  
+                  const filtered = [...displayIssues]
+                    .filter(iss => {
+                      if (issueStatus === 'all' || issueStatus === 'reported') return true;
+                      const s = (iss.status || 'reported').toLowerCase().replace(/\s+/g,'-');
+                      return s === issueStatus;
+                    })
+                    .sort((a, b) => {
+                      const dateA = new Date(a.createdAt);
+                      const dateB = new Date(b.createdAt);
+                      return issueSort === 'newest' ? dateB - dateA : dateA - dateB;
+                    });
+                  
+                  if (filtered.length === 0) return <li>Nema kvarova sa izabranim filterom.</li>;
+                  
+                  return filtered.map((iss) => (
                     <li key={iss._id}>
                       <div>
                         <div style={{fontWeight:700}}>{iss.title || 'Kvar'}</div>
-                        <div className="meta">{new Date(iss.createdAt).toLocaleString()}</div>
+                        <div className="meta">
+                          {new Date(iss.createdAt).toLocaleString()}
+                          {issueViewFilter === 'all' && iss.tenant && (
+                            <span> • Stan {iss.tenant.apartment?.unitNumber || 'N/A'}</span>
+                          )}
+                        </div>
                         <div className="muted">{iss.description}</div>
-                        <div style={{fontSize:'0.9em',color:iss.priority==='high'?'#b00':'#555'}}>
-                          Prioritet: {iss.priority === 'high' ? 'Visok' : iss.priority === 'medium' ? 'Srednji' : 'Nizak'}
+                        <div style={{fontSize:'0.9em',marginTop:4}}>
+                          <span style={{color:iss.priority==='high'?'#b00':iss.priority==='medium'?'#f59e0b':'#10b981',fontWeight:600}}>
+                            {iss.priority === 'high' ? '🔴 Visok' : iss.priority === 'medium' ? '🟡 Srednji' : '🟢 Nizak'} prioritet
+                          </span>
                         </div>
                       </div>
                       <div style={{textAlign:'right'}}>
                         <div className={statusClass(iss.status)}>{statusLabel(iss.status)}</div>
                       </div>
                     </li>
-                  ))}
+                  ));
+                })()}
               </ul>
             )}
           </div>
@@ -597,7 +632,7 @@ function TenantDashboard({ user, tenantNav, setTenantNav }) {
             {/* Overview hero */}
             <div className="overview-hero" style={{marginBottom:12}}>
               <div>
-                <div className="hello">Zdravo{user?.firstName ? `, ${user.firstName}` : ''} 👋</div>
+                <div className="hello">Zdravo{user?.firstName ? `, ${user.firstName}` : ''}</div>
                 <div className="muted">Evo šta se dešava u vašoj zgradi</div>
               </div>
               <div className="kpi-chips">
@@ -646,8 +681,6 @@ function TenantDashboard({ user, tenantNav, setTenantNav }) {
                         const poll = unvotedPolls[0];
                         const voteCounts = poll.options.map(opt => poll.votes.filter(v => v.option === opt).length);
                         const data = poll.options.map((opt, i) => ({ label: opt, value: voteCounts[i] }));
-                        const baseHex = '#4F46E5'; // indigo to match card accent
-                        // Use default PieChart pastel palette (purples/greens/blues)
                         return (
                           <div>
                             <div style={{fontWeight:600, marginBottom:6}}>{poll.question}</div>
@@ -821,8 +854,95 @@ function TenantDashboard({ user, tenantNav, setTenantNav }) {
         {/* polls tab merged into bulletin */}
 
       </div>
+      
+      {/* Issue Reporting Modal */}
+      {showIssueModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0,0,0,0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000
+        }}>
+          <div style={{
+            background: 'white',
+            padding: 30,
+            borderRadius: 8,
+            width: '90%',
+            maxWidth: 600
+          }}>
+            <h3 style={{ marginTop: 0, marginBottom: 20, color: '#2c3e50' }}>Prijavite kvar</h3>
+            <form onSubmit={handleReport} style={{display:'grid',gap:12}}>
+              <div>
+                <label style={{display:'block', marginBottom:5, fontSize:14, color:'#2c3e50'}}>Naslov</label>
+                <input 
+                  type="text"
+                  placeholder="Kratak naslov (npr. Curenje česme)" 
+                  value={title} 
+                  onChange={e=>setTitle(e.target.value)}
+                  style={{width:'100%', padding:10, border:'1px solid #ddd', borderRadius:4, fontSize:14}}
+                />
+              </div>
+              <div>
+                <label style={{display:'block', marginBottom:5, fontSize:14, color:'#2c3e50'}}>Opis</label>
+                <textarea 
+                  placeholder="Opišite problem detaljno..." 
+                  value={issue} 
+                  onChange={e=>setIssue(e.target.value)} 
+                  rows={5}
+                  style={{width:'100%', padding:10, border:'1px solid #ddd', borderRadius:4, fontSize:14}}
+                />
+              </div>
+              <div>
+                <label style={{display:'block', marginBottom:8, fontSize:14, color:'#2c3e50'}}>Hitnost</label>
+                <div style={{display:'flex', gap:15}}>
+                  <label style={{display:'flex', alignItems:'center', gap:5}}>
+                    <input type="radio" name="priority" value="low" checked={priority === 'low'} onChange={() => setPriority('low')} />
+                    <span>Niska</span>
+                  </label>
+                  <label style={{display:'flex', alignItems:'center', gap:5}}>
+                    <input type="radio" name="priority" value="medium" checked={priority === 'medium'} onChange={() => setPriority('medium')} />
+                    <span>Srednja</span>
+                  </label>
+                  <label style={{display:'flex', alignItems:'center', gap:5}}>
+                    <input type="radio" name="priority" value="high" checked={priority === 'high'} onChange={() => setPriority('high')} />
+                    <span>Visoka</span>
+                  </label>
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop:10 }}>
+                <button 
+                  type="button" 
+                  onClick={() => { 
+                    setShowIssueModal(false); 
+                    setTitle(''); 
+                    setIssue(''); 
+                    setPriority('low'); 
+                    setError('');
+                  }} 
+                  style={{ padding: '10px 20px', background: '#6c757d', color: 'white', border: 'none', borderRadius: 4, cursor: 'pointer' }}
+                >
+                  Otkaži
+                </button>
+                <button 
+                  type="submit" 
+                  style={{ padding: '10px 20px', background: '#198654', color: 'white', border: 'none', borderRadius: 4, cursor: 'pointer' }}
+                >
+                  Prijavi
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
 export default TenantDashboard;
+
