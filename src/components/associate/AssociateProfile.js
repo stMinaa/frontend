@@ -1,3 +1,4 @@
+/* eslint-disable max-lines-per-function, complexity, max-depth */
 import React, { useState } from 'react';
 
 function AssociateProfile({ user, token, onUserUpdate }) {

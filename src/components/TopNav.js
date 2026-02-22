@@ -1,3 +1,4 @@
+/* eslint-disable max-lines-per-function */
 import React from 'react';
 
 function TopNav({ user, activeTab, onTabChange, onLogout }) {
@@ -16,20 +17,19 @@ function TopNav({ user, activeTab, onTabChange, onLogout }) {
     }
     if (role === 'manager') {
       return [
-        { key: 'buildings', label: 'Zgrade' }
+        { key: 'buildings', label: 'Zgrade' },
+        { key: 'kvarovi', label: 'Kvarovi' }
       ];
     }
     if (role === 'tenant') {
       return [
-        { key: 'dashboard', label: 'Početna' },
         { key: 'issues', label: 'Kvarovi' },
         { key: 'bulletin', label: 'Oglasna tabla' }
       ];
     }
     if (role === 'associate') {
       return [
-        { key: 'dashboard', label: 'Početna' },
-        { key: 'jobs', label: 'Poslovi' }
+        { key: 'kvarovi', label: 'Kvarovi' }
       ];
     }
     return [{ key: 'dashboard', label: 'Početna' }];
@@ -43,39 +43,23 @@ function TopNav({ user, activeTab, onTabChange, onLogout }) {
       justifyContent: 'space-between',
       alignItems: 'center',
       padding: '15px 30px',
-      background: '#2c3e50',
-      color: 'white',
-      borderBottom: '3px solid #3498db'
+      background: '#16202b',
+      color: 'white'
     }}>
       <div style={{ fontSize: 20, fontWeight: 'bold' }}>
-        Smartwalls
+        Smart Walls
       </div>
 
       <div style={{ display: 'flex', gap: 15 }}>
-        <button
-          onClick={() => onTabChange('profile')}
-          style={{
-            padding: '8px 20px',
-            background: activeTab === 'profile' ? '#3498db' : 'transparent',
-            color: 'white',
-            border: '1px solid white',
-            borderRadius: 4,
-            cursor: 'pointer',
-            fontWeight: activeTab === 'profile' ? 'bold' : 'normal'
-          }}
-        >
-          Profil
-        </button>
-
         {tabs.map(tab => (
           <button
             key={tab.key}
             onClick={() => onTabChange(tab.key)}
             style={{
               padding: '8px 20px',
-              background: activeTab === tab.key ? '#3498db' : 'transparent',
+              background: activeTab === tab.key ? 'rgba(255,255,255,0.1)' : 'transparent',
               color: 'white',
-              border: '1px solid white',
+              border: activeTab === tab.key ? '1px solid rgba(255,255,255,0.3)' : 'none',
               borderRadius: 4,
               cursor: 'pointer',
               fontWeight: activeTab === tab.key ? 'bold' : 'normal'
@@ -87,22 +71,40 @@ function TopNav({ user, activeTab, onTabChange, onLogout }) {
       </div>
 
       <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-        <span style={{ fontSize: 14 }}>
-          {user?.firstName || user?.username} ({role})
-        </span>
         <button
-          onClick={onLogout}
+          onClick={() => onTabChange('profile')}
           style={{
-            padding: '8px 20px',
-            background: '#e74c3c',
+            padding: '6px 12px',
+            background: activeTab === 'profile' ? 'rgba(255,255,255,0.1)' : 'transparent',
             color: 'white',
             border: 'none',
             borderRadius: 4,
             cursor: 'pointer',
-            fontWeight: 'bold'
+            fontSize: 14,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 5
           }}
+          title="Profil"
         >
-          Odjavi se
+          Profile
+        </button>
+        <button
+          onClick={onLogout}
+          style={{
+            padding: '6px 12px',
+            background: 'transparent',
+            color: 'white',
+            border: 'none',
+            borderRadius: 4,
+            cursor: 'pointer',
+            fontSize: 14,
+            display: 'flex',
+            alignItems: 'center'
+          }}
+          title="Odjavi se"
+        >
+          Exit
         </button>
       </div>
     </nav>

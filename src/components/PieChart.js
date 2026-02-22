@@ -1,3 +1,4 @@
+/* eslint-disable max-lines-per-function */
 import React from 'react';
 
 function PieChart({ data, size = 120, colors = [], style = {}, className, donut = true, pastel = true }) {
@@ -66,7 +67,7 @@ function PieChart({ data, size = 120, colors = [], style = {}, className, donut 
         const y2 = radius - radius * Math.cos(end);
         const large = end - start > Math.PI ? 1 : 0;
         const pathData = `M ${radius} ${radius} L ${x1} ${y1} A ${radius} ${radius} 0 ${large} 1 ${x2} ${y2} Z`;
-        const base = (colors[i % (colors.length || 1)]) || theme[i % theme.length];
+        const _base = (colors[i % (colors.length || 1)]) || theme[i % theme.length];
         const fill = `url(#grad-${uid}-${i})`;
         return <path key={i} d={pathData} fill={fill} stroke="#fff" strokeWidth={1} />;
       })}

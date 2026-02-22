@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 
 import Modal from '../Modal';
 import PieChart from '../PieChart';
+
 import ManagerProfile from './ManagerProfile';
 
 function ManagerDashboard({ user, activeTab = 'home' }) {

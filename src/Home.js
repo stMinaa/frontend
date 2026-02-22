@@ -1,4 +1,6 @@
+/* eslint-disable max-lines-per-function */
 import React from 'react';
+
 import VideoBackground from './components/VideoBackground';
 
 function Home({ onNavigate }) {
@@ -11,53 +13,41 @@ function Home({ onNavigate }) {
         left: 0,
         right: 0,
         display: 'flex',
-        justifyContent: 'space-between',
+        justifyContent: 'flex-start',
         alignItems: 'center',
-        padding: '20px 40px',
-        background: 'rgba(0, 0, 0, 0.3)',
-        backdropFilter: 'blur(5px)',
-        zIndex: 100
+        padding: '15px 40px',
+        background: '#2c3e50',
+        zIndex: 100,
+        gap: 30
       }}>
-        <div style={{
-          fontSize: 24,
-          fontWeight: 'bold',
-          color: 'white',
-          letterSpacing: '1px'
-        }}>
-          Smartwalls
-        </div>
-        <div style={{ display: 'flex', gap: 20 }}>
-          <button
-            onClick={() => onNavigate('home')}
-            style={{
-              padding: '10px 25px',
-              background: 'rgba(255, 255, 255, 0.2)',
-              color: 'white',
-              border: '1px solid white',
-              borderRadius: 5,
-              cursor: 'pointer',
-              fontSize: 16,
-              fontWeight: 500
-            }}
-          >
-            Početna
-          </button>
-          <button
-            onClick={() => onNavigate('login')}
-            style={{
-              padding: '10px 25px',
-              background: '#27ae60',
-              color: 'white',
-              border: 'none',
-              borderRadius: 5,
-              cursor: 'pointer',
-              fontSize: 16,
-              fontWeight: 500
-            }}
-          >
-            Prijava
-          </button>
-        </div>
+        <button
+          onClick={() => onNavigate('home')}
+          style={{
+            padding: '0',
+            background: 'transparent',
+            color: 'white',
+            border: 'none',
+            cursor: 'pointer',
+            fontSize: 16,
+            fontWeight: 400
+          }}
+        >
+          Home
+        </button>
+        <button
+          onClick={() => onNavigate('login')}
+          style={{
+            padding: '0',
+            background: 'transparent',
+            color: 'white',
+            border: 'none',
+            cursor: 'pointer',
+            fontSize: 16,
+            fontWeight: 400
+          }}
+        >
+          Login
+        </button>
       </div>
 
       {/* Hero Section */}
@@ -72,11 +62,10 @@ function Home({ onNavigate }) {
         padding: '0 20px'
       }}>
         <h1 style={{
-          fontSize: 72,
-          fontWeight: 'bold',
+          fontSize: 120,
+          fontWeight: 300,
           margin: 0,
           marginBottom: 20,
-          textShadow: '2px 2px 8px rgba(0,0,0,0.7)',
           letterSpacing: '2px'
         }}>
           Smartwalls
@@ -85,30 +74,11 @@ function Home({ onNavigate }) {
           fontSize: 28,
           margin: 0,
           marginBottom: 40,
-          textShadow: '1px 1px 4px rgba(0,0,0,0.7)',
           fontWeight: 300,
           maxWidth: 700
         }}>
-          Upravljanje stanovima i zgradama
+          Tennet's assembly and building management
         </p>
-        <button
-          onClick={() => onNavigate('login')}
-          style={{
-            padding: '15px 40px',
-            fontSize: 20,
-            background: '#27ae60',
-            color: 'white',
-            border: 'none',
-            borderRadius: 8,
-            cursor: 'pointer',
-            fontWeight: 'bold',
-            transition: 'background 0.3s, transform 0.2s'
-          }}
-          onMouseOver={(e) => e.target.style.transform = 'scale(1.05)'}
-          onMouseOut={(e) => e.target.style.transform = 'scale(1)'}
-        >
-          Započni
-        </button>
       </div>
     </VideoBackground>
   );

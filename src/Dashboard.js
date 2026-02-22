@@ -1,13 +1,14 @@
 import React from 'react';
-import TopNav from './components/TopNav';
-import TenantDashboard from './components/tenant/TenantDashboard';
-import TenantProfile from './components/tenant/TenantProfile';
-import ManagerDashboard from './components/manager/ManagerDashboard';
-import ManagerProfile from './components/manager/ManagerProfile';
-import DirectorDashboard from './components/director/DirectorDashboard';
-import DirectorProfile from './components/director/DirectorProfile';
+
 import AssociateDashboard from './components/associate/AssociateDashboard';
 import AssociateProfile from './components/associate/AssociateProfile';
+import DirectorDashboard from './components/director/DirectorDashboard';
+import DirectorProfile from './components/director/DirectorProfile';
+import ManagerDashboard from './components/manager/ManagerDashboard';
+import ManagerProfile from './components/manager/ManagerProfile';
+import TenantDashboard from './components/tenant/TenantDashboard';
+import TenantProfile from './components/tenant/TenantProfile';
+import TopNav from './components/TopNav';
 
 function Dashboard({ user, activeTab, onTabChange, onLogout, onUserUpdate }) {
   // Phase 2: Render TopNav + content based on activeTab

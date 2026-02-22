@@ -1,4 +1,6 @@
+/* eslint-disable max-lines-per-function, complexity, max-lines */
 import React, { useState } from 'react';
+
 import VideoBackground from './components/VideoBackground';
 
 function Signup({ onNavigate }) {
@@ -56,7 +58,7 @@ function Signup({ onNavigate }) {
         return;
       }
 
-      setSuccess('Nalog kreiran! Vaš nalog zahteva odobrenje upravnika. Preusmeravam na prijavu...');
+      setSuccess('Nalog kreiran! Upravnik će vam dodeliti zgradu i stan nakon odobrenja. Preusmeravam na prijavu...');
 
       // Phase 2: Don't save anything to localStorage on signup
       // User must login after account creation
@@ -82,56 +84,41 @@ function Signup({ onNavigate }) {
         left: 0,
         right: 0,
         display: 'flex',
-        justifyContent: 'space-between',
+        justifyContent: 'flex-start',
         alignItems: 'center',
-        padding: '20px 40px',
-        background: 'rgba(0, 0, 0, 0.3)',
-        backdropFilter: 'blur(5px)',
-        zIndex: 100
+        padding: '15px 40px',
+        background: '#2c3e50',
+        zIndex: 100,
+        gap: 30
       }}>
-        <div style={{
-          fontSize: 24,
-          fontWeight: 'bold',
-          color: 'white',
-          letterSpacing: '1px',
-          cursor: 'pointer'
-        }}
-        onClick={() => onNavigate('home')}
+        <button
+          onClick={() => onNavigate('home')}
+          style={{
+            padding: '0',
+            background: 'transparent',
+            color: 'white',
+            border: 'none',
+            cursor: 'pointer',
+            fontSize: 16,
+            fontWeight: 400
+          }}
         >
-          Smartwalls
-        </div>
-        <div style={{ display: 'flex', gap: 20 }}>
-          <button
-            onClick={() => onNavigate('home')}
-            style={{
-              padding: '10px 25px',
-              background: 'rgba(255, 255, 255, 0.2)',
-              color: 'white',
-              border: '1px solid white',
-              borderRadius: 5,
-              cursor: 'pointer',
-              fontSize: 16,
-              fontWeight: 500
-            }}
-          >
-            Početna
-          </button>
-          <button
-            onClick={() => onNavigate('login')}
-            style={{
-              padding: '10px 25px',
-              background: '#27ae60',
-              color: 'white',
-              border: 'none',
-              borderRadius: 5,
-              cursor: 'pointer',
-              fontSize: 16,
-              fontWeight: 500
-            }}
-          >
-            Prijava
-          </button>
-        </div>
+          Home
+        </button>
+        <button
+          onClick={() => onNavigate('login')}
+          style={{
+            padding: '0',
+            background: 'transparent',
+            color: 'white',
+            border: 'none',
+            cursor: 'pointer',
+            fontSize: 16,
+            fontWeight: 400
+          }}
+        >
+          Login
+        </button>
       </div>
 
       {/* Signup Card */}
@@ -143,7 +130,7 @@ function Signup({ onNavigate }) {
         padding: '20px'
       }}>
         <div style={{
-          background: 'white',
+          background: 'rgba(0, 0, 0, 0.5)',
           padding: '40px 50px',
           borderRadius: 12,
           backdropFilter: 'blur(10px)',
@@ -154,7 +141,7 @@ function Signup({ onNavigate }) {
             textAlign: 'center',
             marginBottom: 30,
             fontSize: 28,
-            color: '#2c3e50'
+            color: '#fff'
           }}>
             Registracija
           </h2>
@@ -269,6 +256,7 @@ function Signup({ onNavigate }) {
                 value={password}
                 onChange={e => setPassword(e.target.value)}
                 disabled={loading}
+                autoComplete="new-password"
                 style={{
                   width: '100%',
                   padding: '12px 15px',
@@ -286,7 +274,7 @@ function Signup({ onNavigate }) {
               style={{
                 width: '100%',
                 padding: '12px',
-                background: loading ? '#95a5a6' : '#27ae60',
+                background: loading ? '#95a5a6' : '#198653',
                 color: 'white',
                 border: 'none',
                 borderRadius: 6,
@@ -295,8 +283,8 @@ function Signup({ onNavigate }) {
                 cursor: loading ? 'not-allowed' : 'pointer',
                 transition: 'background 0.3s'
               }}
-              onMouseOver={(e) => !loading && (e.target.style.background = '#229954')}
-              onMouseOut={(e) => !loading && (e.target.style.background = '#27ae60')}
+              onMouseOver={(e) => !loading && (e.target.style.background = '#146b42')}
+              onMouseOut={(e) => !loading && (e.target.style.background = '#198653')}
             >
               {loading ? 'Kreiram nalog...' : 'Registruj se'}
             </button>
@@ -314,7 +302,7 @@ function Signup({ onNavigate }) {
 
             {success && (
               <div style={{
-                color: '#27ae60',
+                color: '#198653',
                 marginTop: 15,
                 fontSize: 14,
                 textAlign: 'center',
@@ -328,7 +316,7 @@ function Signup({ onNavigate }) {
               marginTop: 20,
               textAlign: 'center',
               fontSize: 15,
-              color: '#7f8c8d'
+              color: '#ddd'
             }}>
               Već imate nalog?{' '}
               <button
@@ -338,7 +326,7 @@ function Signup({ onNavigate }) {
                 style={{
                   background: 'none',
                   border: 'none',
-                  color: '#27ae60',
+                  color: '#1fc08f',
                   cursor: 'pointer',
                   textDecoration: 'underline',
                   fontSize: 15,

@@ -3,6 +3,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 
 import Modal from '../Modal';
 import PieChart from '../PieChart';
+
 import TenantProfile from './TenantProfile';
 
 function TenantDashboard({ user, tenantNav, setTenantNav, onUserUpdate }) {
