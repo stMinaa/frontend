@@ -4,6 +4,8 @@ import React, { useState, useEffect, useMemo } from 'react';
 import Modal from '../Modal';
 import PieChart from '../PieChart';
 
+import { statusClass, statusLabel } from '../../utils/statusHelpers';
+
 import TenantProfile from './TenantProfile';
 
 function TenantDashboard({ user, tenantNav, setTenantNav, onUserUpdate }) {
@@ -279,32 +281,6 @@ function TenantDashboard({ user, tenantNav, setTenantNav, onUserUpdate }) {
     } catch (e) {
       alert('Neuspešno brisanje obaveštenja');
     }
-  };
-
-  // Helper to map status to badge class and label
-  const statusClass = (s) => {
-    if (!s) return 'badge reported';
-    const st = s.toLowerCase();
-    if (st === 'reported' || st === 'open') return 'badge reported';
-    if (st === 'forwarded') return 'badge forwarded';
-    if (st === 'assigned') return 'badge in-review';
-    if (st === 'in progress' || st === 'in-progress') return 'badge in-progress';
-    if (st === 'resolved') return 'badge done';
-    if (st === 'rejected') return 'badge rejected';
-    return 'badge reported';
-  };
-
-  // Nicely formatted status label for display; default to 'Reported'
-  const statusLabel = (s) => {
-    const st = (s || 'reported').toString().toLowerCase().replace(/-/g, ' ');
-    if (st === 'open') return 'Prijavljen';
-    if (st === 'reported') return 'Prijavljen';
-    if (st === 'forwarded') return 'Prosleđen direktoru';
-    if (st === 'assigned') return 'Dodeljen';
-    if (st === 'in progress') return 'U toku';
-    if (st === 'resolved') return 'Završen';
-    if (st === 'rejected') return 'Odbijen';
-    return st.split(' ').map(w => w ? w[0].toUpperCase() + w.slice(1) : '').join(' ');
   };
 
   // Overview helpers

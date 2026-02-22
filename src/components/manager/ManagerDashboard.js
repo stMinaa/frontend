@@ -4,6 +4,8 @@ import React, { useState, useEffect } from 'react';
 import Modal from '../Modal';
 import PieChart from '../PieChart';
 
+import { statusClass, statusLabel } from '../../utils/statusHelpers';
+
 import ManagerProfile from './ManagerProfile';
 
 function ManagerDashboard({ user, activeTab = 'home' }) {
@@ -108,25 +110,6 @@ function ManagerDashboard({ user, activeTab = 'home' }) {
   const [tenantQuery, setTenantQuery] = useState('');
   const [associates, setAssociates] = useState([]);
   const [assignPick, setAssignPick] = useState({}); // { [issueId]: username }
-
-  // Status helpers (match TenantDashboard behavior; map legacy 'open' -> 'reported')
-  const statusClass = (s) => {
-    if (!s) return 'badge reported';
-    const st = s.toLowerCase();
-    if (st === 'reported' || st === 'open') return 'badge reported';
-    if (st === 'forwarded') return 'badge forwarded';
-    if (st === 'assigned') return 'badge in-review';
-    if (st === 'in progress' || st === 'in-progress') return 'badge in-progress';
-    if (st === 'resolved') return 'badge done';
-    if (st === 'rejected') return 'badge rejected';
-    return 'badge reported';
-  };
-  const statusLabel = (s) => {
-    const st = (s || 'reported').toString().toLowerCase().replace(/-/g, ' ');
-    if (st === 'open') return 'Prijavljen';
-    if (st === 'in progress') return 'U toku';
-    return st.split(' ').map(w => w ? w[0].toUpperCase() + w.slice(1) : '').join(' ');
-  };
 
   // Use activeTab directly from parent (TopNav controls)
   const tab = activeTab || 'home';
