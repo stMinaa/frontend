@@ -1,10 +1,9 @@
 /* eslint-disable max-lines, max-lines-per-function, complexity, max-depth, no-console, no-mixed-operators, react/no-array-index-key */
 import React, { useState, useEffect, useMemo } from 'react';
 
+import { statusClass, statusLabel } from '../../utils/statusHelpers';
 import Modal from '../Modal';
 import PieChart from '../PieChart';
-
-import { statusClass, statusLabel } from '../../utils/statusHelpers';
 
 import TenantProfile from './TenantProfile';
 
@@ -17,6 +16,8 @@ function TenantDashboard({ user, tenantNav, setTenantNav, onUserUpdate }) {
   const [issues, setIssues] = useState([]);
   const [loading, setLoading] = useState(false);
   const [noticeContent, setNoticeContent] = useState('');
+  const [noticeTitle, setNoticeTitle] = useState('');
+  const [noticeMsg, setNoticeMsg] = useState('');
   const [notices, setNotices] = useState([]);
   const [, setNoticesLoading] = useState(false);
   const [showNoticeModal, setShowNoticeModal] = useState(false);
@@ -34,6 +35,7 @@ function TenantDashboard({ user, tenantNav, setTenantNav, onUserUpdate }) {
     const [, setBuildingStats] = useState(null);
     const [changesSince, setChangesSince] = useState(null);
     const [etaAckMsg, setEtaAckMsg] = useState('');
+  const [voteMsg, setVoteMsg] = useState('');
 
   // Get JWT from localStorage (assumes it's stored there after login/signup)
   const token = localStorage.getItem('token');
@@ -144,6 +146,7 @@ function TenantDashboard({ user, tenantNav, setTenantNav, onUserUpdate }) {
 
   // Vote in a poll
   const handleVote = async (pollId, option) => {
+    setVoteMsg('');
     try {
       const token = localStorage.getItem('token');
       const res = await fetch(`http://localhost:5000/api/polls/${pollId}/vote`, {
@@ -154,18 +157,23 @@ function TenantDashboard({ user, tenantNav, setTenantNav, onUserUpdate }) {
         },
         body: JSON.stringify({ option })
       });
-      if (!res.ok) throw new Error('Failed to vote');
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setVoteMsg(data.message || 'Glasanje neuspešno.');
+        return;
+      }
       // Refresh polls
       const bId = user?.building;
       if (bId) {
         const pr = await fetch(`http://localhost:5000/api/buildings/${bId}/polls`, { headers: { 'Authorization': `Bearer ${token}` } });
         if (pr.ok) {
-          setPolls(await pr.json());
+          const pollsRefresh = await pr.json();
+          if (Array.isArray(pollsRefresh.data)) setPolls(pollsRefresh.data);
         }
       }
     } catch (e) {
       console.error(e);
-      alert('Glasanje neuspešno. Molimo pokušajte ponovo.');
+      setVoteMsg('Glasanje neuspešno. Molimo pokušajte ponovo.');
     }
   };
 
@@ -206,10 +214,10 @@ function TenantDashboard({ user, tenantNav, setTenantNav, onUserUpdate }) {
         });
         if (issuesRes.ok) {
           const issuesData = await issuesRes.json();
-          if (Array.isArray(issuesData)) setIssues(issuesData);
+          if (Array.isArray(issuesData.data)) setIssues(issuesData.data);
         }
       } else {
-        setError(data.message || 'Neuspešno prijavljivanje kvara.');
+        setError(data.message || data.error || 'Neuspešno prijavljivanje kvara.');
       }
     } catch (err) {
       setError('Neuspešno prijavljivanje kvara.');
@@ -220,16 +228,14 @@ function TenantDashboard({ user, tenantNav, setTenantNav, onUserUpdate }) {
   const handlePostNotice = async (e) => {
     e.preventDefault();
     if (!noticeContent.trim()) {
-      setError('Molimo unesite sadržaj obaveštenja.');
-      setSuccess('');
+      setNoticeMsg('Molimo unesite sadržaj obaveštenja.');
       return;
     }
     if (!user?.building) {
-      setError('Zgrada nije dodeljena. Ne možete objaviti obaveštenje.');
+      setNoticeMsg('Zgrada nije dodeljena. Ne možete objaviti obaveštenje.');
       return;
     }
-    setError('');
-    setSuccess('');
+    setNoticeMsg('');
     try {
       const res = await fetch(`http://localhost:5000/api/buildings/${user.building}/notices`, {
         method: 'POST',
@@ -237,25 +243,26 @@ function TenantDashboard({ user, tenantNav, setTenantNav, onUserUpdate }) {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer ' + token
         },
-        body: JSON.stringify({ content: noticeContent })
+        body: JSON.stringify({ title: noticeTitle, content: noticeContent })
       });
       const data = await res.json();
       if (res.ok) {
-        setSuccess('Obaveštenje objavljeno!');
         setNoticeContent('');
+        setNoticeTitle('');
+        setShowNoticeModal(false);
         // Refetch notices
         fetch(`http://localhost:5000/api/buildings/${user.building}/notices`, {
           headers: { 'Authorization': 'Bearer ' + token }
         })
-          .then(res => res.json())
-          .then(data => {
-            if (Array.isArray(data.data)) setNotices(data.data);
+          .then(r => r.json())
+          .then(nd => {
+            if (Array.isArray(nd.data)) setNotices(nd.data);
           });
       } else {
-        setError(data.message || 'Neuspešno objavljivanje obaveštenja.');
+        setNoticeMsg(data.message || 'Neuspešno objavljivanje obaveštenja.');
       }
     } catch (err) {
-      setError('Neuspešno objavljivanje obaveštenja.');
+      setNoticeMsg('Neuspešno objavljivanje obaveštenja.');
     }
   };
 
@@ -276,7 +283,10 @@ function TenantDashboard({ user, tenantNav, setTenantNav, onUserUpdate }) {
         const nr = await fetch(`http://localhost:5000/api/buildings/${user.building}/notices`, {
           headers: { 'Authorization': 'Bearer ' + token }
         });
-        if (nr.ok) setNotices(await nr.json());
+        if (nr.ok) {
+          const nrData = await nr.json();
+          if (Array.isArray(nrData.data)) setNotices(nrData.data);
+        }
       }
     } catch (e) {
       alert('Neuspešno brisanje obaveštenja');
@@ -323,7 +333,7 @@ function TenantDashboard({ user, tenantNav, setTenantNav, onUserUpdate }) {
         setEtaAckMsg('Potvrđeno. Obavestićemo tim za popravke.');
         // refresh issues
         fetch('http://localhost:5000/api/issues/my', { headers: { 'Authorization': 'Bearer ' + token } })
-          .then(r => r.json()).then(d => Array.isArray(d) && setIssues(d));
+          .then(r => r.json()).then(d => Array.isArray(d.data) && setIssues(d.data));
       } else {
         setEtaAckMsg(data.message || 'Neuspešno potvrđivanje');
       }
@@ -397,6 +407,7 @@ function TenantDashboard({ user, tenantNav, setTenantNav, onUserUpdate }) {
         <div style={{display:'flex',gap:8,margin:'8px 4px'}}>
           <button className="btn-flat btn-flat-primary" onClick={()=>setShowNoticeModal(true)}>Novo obaveštenje</button>
         </div>
+        {voteMsg && <div style={{margin:'8px 4px 0', padding:'8px 12px', background:'#fff3cd', color:'#856404', borderRadius:6, fontSize:13}}>{voteMsg}</div>}
         <div className="postit-grid" style={{marginTop:8}}>
           {items.map(item => (
             <div
@@ -449,21 +460,29 @@ function TenantDashboard({ user, tenantNav, setTenantNav, onUserUpdate }) {
                     const maxVotes = Math.max(0,...voteCounts);
                     const leaders = item.poll.options.filter((opt,idx)=>voteCounts[idx]===maxVotes && maxVotes>0);
                     const isClosed = !!item.poll.closedAt;
+                    const myVoteEntry = item.poll.votes.find(v => String(v.voter?._id || v.voter) === String(user?._id));
+                    const hasVoted = !!myVoteEntry;
+                    const myVote = myVoteEntry?.option;
                     return (
                       <div style={{marginTop:8}}>
                         <div style={{fontSize:12,fontWeight:600}}>
                           {isClosed ? (
                             leaders.length===0 ? 'Zatvoreno • Nema glasova' : `Zatvoreno • Pobednik${leaders.length>1?'i':''}: ${leaders.join(', ')}`
+                          ) : hasVoted ? (
+                            `Vaš glas: ${myVote} ✓`
                           ) : (
                             leaders.length===0 ? 'Još nema glasova' : (leaders.length>1 ? `Nerešeno: ${leaders.join(', ')}` : `Vodi: ${leaders[0]}`)
                           )}
                         </div>
-                        {!isClosed && (
+                        {!isClosed && !hasVoted && (
                           <div style={{display:'flex', flexDirection:'column', gap:6, marginTop:6}}>
                             {item.poll.options.map(opt => (
                               <button key={opt} className="btn" onClick={()=>handleVote(item.poll._id, opt)}>{opt}</button>
                             ))}
                           </div>
+                        )}
+                        {!isClosed && hasVoted && (
+                          <div style={{fontSize:12, color:'#6c757d', marginTop:6, fontStyle:'italic'}}>Glasanje završeno.</div>
                         )}
                       </div>
                     );
@@ -475,16 +494,159 @@ function TenantDashboard({ user, tenantNav, setTenantNav, onUserUpdate }) {
           {items.length === 0 && <div className="muted">Nema sadržaja.</div>}
         </div>
         {showNoticeModal && (
-          <Modal title="Objavi obaveštenje" onClose={()=>setShowNoticeModal(false)}>
-            <form onSubmit={(e)=>{handlePostNotice(e); if(noticeContent.trim()) setShowNoticeModal(false);}} style={{display:'grid',gap:12}}>
+          <Modal title="Objavi obaveštenje" onClose={()=>{setNoticeContent('');setNoticeTitle('');setNoticeMsg('');setShowNoticeModal(false);}}>
+            <form onSubmit={handlePostNotice} style={{display:'grid',gap:12}}>
+              <input
+                type="text"
+                placeholder="Naslov obaveštenja..."
+                value={noticeTitle}
+                onChange={e=>setNoticeTitle(e.target.value)}
+              />
               <textarea rows={4} placeholder="Podelite obaveštenje za zgradu..." value={noticeContent} onChange={e=>setNoticeContent(e.target.value)} />
               <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
                 <button type="submit" className="btn-flat btn-flat-primary">Objavi obaveštenje</button>
-                <button type="button" className="btn-flat btn-flat-outline" onClick={()=>{setNoticeContent('');setShowNoticeModal(false);}}>Otkaži</button>
+                <button type="button" className="btn-flat btn-flat-outline" onClick={()=>{setNoticeContent('');setNoticeTitle('');setNoticeMsg('');setShowNoticeModal(false);}}>Otkaži</button>
               </div>
             </form>
-            {success && <div style={{marginTop:8,color:'green',fontSize:13}}>{success}</div>}
-            {error && <div style={{marginTop:8,color:'red',fontSize:13}}>{error}</div>}
+            {noticeMsg && <div style={{marginTop:8,color:'red',fontSize:13}}>{noticeMsg}</div>}
+          </Modal>
+        )}
+      </div>
+    );
+  }
+
+  if (tenantNav === 'issues') {
+    const displayIssues = issueViewFilter === 'my' ? issues : allBuildingIssues;
+    const filtered = [...displayIssues]
+      .filter(iss => {
+        if (issueStatus === 'all') return true;
+        const s = (iss.status || 'reported').toLowerCase().replace(/\s+/g, '-');
+        return s === issueStatus;
+      })
+      .sort((a, b) => issueSort === 'newest'
+        ? new Date(b.createdAt) - new Date(a.createdAt)
+        : new Date(a.createdAt) - new Date(b.createdAt)
+      );
+    return (
+      <div style={{maxWidth:1400, margin:'0 auto', padding:'32px 40px'}}>
+        <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', flexWrap:'wrap', gap:16, marginBottom:24}}>
+          <h2 style={{margin:0, fontSize:28, fontWeight:600}}>Kvarovi</h2>
+          <button
+            className="btn-flat btn-flat-primary"
+            style={{background:'#1fc08f', padding:'10px 20px', fontSize:14}}
+            onClick={() => setShowIssueModal(true)}
+          >+ Prijavi kvar</button>
+        </div>
+
+        {success && <div style={{padding:'12px 16px', background:'#d1fae5', color:'#065f46', borderRadius:6, marginBottom:16, fontWeight:500}}>{success}</div>}
+
+        <div style={{display:'flex', gap:8, alignItems:'center', flexWrap:'wrap', marginBottom:24}}>
+          <button
+            className={`btn-flat ${issueViewFilter==='my'?'btn-flat-primary':'btn-flat-outline'}`}
+            style={issueViewFilter==='my'?{background:'#1fc08f'}:{}}
+            onClick={() => setIssueViewFilter('my')}
+          >Moji kvarovi</button>
+          <button
+            className={`btn-flat ${issueViewFilter==='all'?'btn-flat-primary':'btn-flat-outline'}`}
+            style={issueViewFilter==='all'?{background:'#1fc08f'}:{}}
+            onClick={() => setIssueViewFilter('all')}
+          >Svi kvarovi u zgradi</button>
+          <div style={{flex:1}} />
+          <select value={issueStatus} onChange={e => setIssueStatus(e.target.value)} style={{padding:'8px 12px', border:'1px solid #d0d7de', borderRadius:6, fontSize:14}}>
+            <option value="all">Svi statusi</option>
+            <option value="reported">Prijavljen</option>
+            <option value="forwarded">Prosleđen direktoru</option>
+            <option value="assigned">Dodeljen</option>
+            <option value="in-progress">U toku</option>
+            <option value="resolved">Završen</option>
+            <option value="rejected">Odbijen</option>
+          </select>
+          <select value={issueSort} onChange={e => setIssueSort(e.target.value)} style={{padding:'8px 12px', border:'1px solid #d0d7de', borderRadius:6, fontSize:14}}>
+            <option value="newest">Najnoviji prvo</option>
+            <option value="oldest">Najstariji prvo</option>
+          </select>
+          <div className="muted" style={{fontSize:14}}>{filtered.length} kvarova</div>
+        </div>
+
+        {loading && <div style={{textAlign:'center', padding:48}} className="muted">Učitavanje...</div>}
+
+        {!loading && filtered.length === 0 && (
+          <div className="card" style={{textAlign:'center', padding:48}}>
+            <div style={{fontSize:40, marginBottom:12}}>🔧</div>
+            <div style={{fontWeight:600, fontSize:16}}>Nema kvarova</div>
+            <div className="muted" style={{marginTop:6}}>
+              {issueViewFilter === 'my' ? 'Niste prijavili nijedan kvar. Prijavite kvar klikom na dugme iznad.' : 'Nema kvarova u zgradi sa izabranim filterom.'}
+            </div>
+          </div>
+        )}
+
+        {!loading && filtered.length > 0 && (
+          <div style={{display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(300px,1fr))', gap:20}}>
+            {filtered.map(iss => (
+              <div key={iss._id} className="card" style={{
+                padding:20,
+                borderTop: `4px solid ${iss.priority==='high'?'#dc3545':iss.priority==='medium'?'#f59e0b':'#1fc08f'}`,
+                display:'flex', flexDirection:'column', gap:10
+              }}>
+                <div style={{fontSize:18, fontWeight:700, color:'#2c3e50'}}>{iss.title || 'Kvar'}</div>
+                <div>
+                  <span style={{fontSize:11, color:'#6c757d', textTransform:'uppercase', letterSpacing:'0.5px'}}>Prioritet</span>
+                  <div style={{marginTop:4}}>
+                    <span className={`badge ${iss.priority==='high'?'urgent':iss.priority==='medium'?'medium':'low'}`}>
+                      {iss.priority==='high' ? 'Visok' : iss.priority==='medium' ? 'Srednji' : 'Nizak'}
+                    </span>
+                  </div>
+                </div>
+                <div>
+                  <span style={{fontSize:11, color:'#6c757d', textTransform:'uppercase', letterSpacing:'0.5px'}}>Opis</span>
+                  <div style={{marginTop:4, color:'#495057', lineHeight:1.5, fontSize:14}}>{iss.description}</div>
+                </div>
+                {issueViewFilter === 'all' && iss.tenant && (
+                  <div style={{fontSize:13, color:'#6c757d'}}>Stan {iss.tenant.apartment?.unitNumber || 'N/A'}</div>
+                )}
+                <div style={{marginTop:'auto', paddingTop:12, borderTop:'1px solid #f1f5f9', display:'flex', justifyContent:'space-between', alignItems:'center'}}>
+                  <div className="muted" style={{fontSize:12}}>{new Date(iss.createdAt).toLocaleDateString()}</div>
+                  <span className={statusClass(iss.status)}>{statusLabel(iss.status)}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {showIssueModal && (
+          <Modal title="Prijavi kvar" onClose={() => { setShowIssueModal(false); setTitle(''); setIssue(''); setPriority('low'); setError(''); }}>
+            <form onSubmit={handleReport} style={{display:'grid', gap:12}}>
+              <div>
+                <label style={{display:'block', marginBottom:5, fontSize:14}}>Naslov</label>
+                <input type="text" placeholder="Kratak naslov (npr. Curenje česme)" value={title} onChange={e=>setTitle(e.target.value)} />
+              </div>
+              <div>
+                <label style={{display:'block', marginBottom:5, fontSize:14}}>Opis</label>
+                <textarea placeholder="Opišite problem detaljno..." value={issue} onChange={e=>setIssue(e.target.value)} rows={5} />
+              </div>
+              <div>
+                <label style={{display:'block', marginBottom:8, fontSize:14}}>Hitnost</label>
+                <div style={{display:'flex', gap:16}}>
+                  <label style={{display:'flex', alignItems:'center', gap:6}}>
+                    <input type="radio" name="priority" value="low" checked={priority==='low'} onChange={() => setPriority('low')} />
+                    <span style={{color:'#1fc08f', fontWeight:500}}>Niska</span>
+                  </label>
+                  <label style={{display:'flex', alignItems:'center', gap:6}}>
+                    <input type="radio" name="priority" value="medium" checked={priority==='medium'} onChange={() => setPriority('medium')} />
+                    <span style={{color:'#f59e0b', fontWeight:500}}>Srednja</span>
+                  </label>
+                  <label style={{display:'flex', alignItems:'center', gap:6}}>
+                    <input type="radio" name="priority" value="high" checked={priority==='high'} onChange={() => setPriority('high')} />
+                    <span style={{color:'#dc3545', fontWeight:500}}>Visoka</span>
+                  </label>
+                </div>
+              </div>
+              <div style={{display:'flex', gap:8, flexWrap:'wrap', marginTop:4}}>
+                <button type="submit" className="btn-flat btn-flat-primary" style={{background:'#1fc08f'}}>Prijavi kvar</button>
+                <button type="button" className="btn-flat btn-flat-outline" onClick={() => { setShowIssueModal(false); setTitle(''); setIssue(''); setPriority('low'); setError(''); }}>Otkaži</button>
+              </div>
+            </form>
+            {error && <div style={{marginTop:8, color:'#dc3545', fontSize:13}}>{error}</div>}
           </Modal>
         )}
       </div>
@@ -495,114 +657,9 @@ function TenantDashboard({ user, tenantNav, setTenantNav, onUserUpdate }) {
     <div>
       <div className="card">
         <div className="card-header">
-          {/* dynamic title per tenantNav to avoid repeating 'Tenant Dashboard' */}
-          <h2>{
-            tenantNav === 'dashboard' ? 'Kontrolna tabla stanara' :
-            tenantNav === 'issues' ? 'Moji kvarovi' : 'Kontrolna tabla stanara'
-          }</h2>
+          <h2>{tenantNav === 'dashboard' ? 'Kontrolna tabla stanara' : 'Kontrolna tabla stanara'}</h2>
           <div className="muted">Dobrodošli nazad, {user?.firstName || user?.username}</div>
         </div>
-
-        {/* Keep report available via button on Overview/Issues; legacy route retained */}
-        
-
-        {(tenantNav === 'issues') && (
-          <div>
-            <div style={{display:'flex', gap:8, marginBottom:16, flexWrap:'wrap'}}>
-              <button className="btn-flat btn-flat-primary" onClick={() => setShowIssueModal(true)}>Prijavi kvar</button>
-            </div>
-            {error && <div style={{color:'red',marginTop:8, marginBottom:8}}>{error}</div>}
-            {success && <div style={{color:'green',marginTop:8, marginBottom:8}}>{success}</div>}
-            
-            {/* Issue View Filter: All Issues vs My Issues */}
-            <div style={{display:'flex', gap:12, marginBottom:16, alignItems:'center'}}>
-              <button 
-                className={issueViewFilter === 'my' ? 'btn' : 'btn ghost'}
-                onClick={() => setIssueViewFilter('my')}
-                style={{background: issueViewFilter === 'my' ? '#10b981' : undefined}}
-              >
-                Moji kvarovi
-              </button>
-              <button 
-                className={issueViewFilter === 'all' ? 'btn' : 'btn ghost'}
-                onClick={() => setIssueViewFilter('all')}
-                style={{background: issueViewFilter === 'all' ? '#10b981' : undefined}}
-              >
-                Svi kvarovi u zgradi
-              </button>
-            </div>
-
-            <div className="card-header" style={{display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:12}}>
-              <h4>{issueViewFilter === 'my' ? 'Vaši kvarovi' : 'Svi kvarovi u zgradi'}</h4>
-              <div style={{display:'flex', gap:8, alignItems:'center', flexWrap:'wrap'}}>
-                <label style={{marginRight:4,fontSize:'0.9em'}}>Status:</label>
-                <select value={issueStatus} onChange={e => setIssueStatus(e.target.value)} style={{fontSize:'0.9em',padding:'4px 8px'}}>
-                  <option value="all">Svi statusi</option>
-                  <option value="reported">Prijavljen</option>
-                  <option value="forwarded">Prosleđen direktoru</option>
-                  <option value="assigned">Dodeljen</option>
-                  <option value="in-progress">U toku</option>
-                  <option value="resolved">Završen</option>
-                  <option value="rejected">Odbijen</option>
-                </select>
-                <label style={{marginLeft:8,marginRight:4,fontSize:'0.9em'}}>Sortiraj:</label>
-                <select value={issueSort} onChange={e => setIssueSort(e.target.value)} style={{fontSize:'0.9em',padding:'4px 8px'}}>
-                  <option value="newest">Najnoviji prvo</option>
-                  <option value="oldest">Najstariji prvo</option>
-                </select>
-              </div>
-            </div>
-            {loading ? (
-              <div>Učitavanje...</div>
-            ) : (
-              <ul className="issue-list">
-                {(() => {
-                  const displayIssues = issueViewFilter === 'my' ? issues : allBuildingIssues;
-                  if (displayIssues.length === 0) return <li>Nema prijavljenih kvarova.</li>;
-                  
-                  const filtered = [...displayIssues]
-                    .filter(iss => {
-                      if (issueStatus === 'all' || issueStatus === 'reported') return true;
-                      const s = (iss.status || 'reported').toLowerCase().replace(/\s+/g,'-');
-                      return s === issueStatus;
-                    })
-                    .sort((a, b) => {
-                      const dateA = new Date(a.createdAt);
-                      const dateB = new Date(b.createdAt);
-                      return issueSort === 'newest' ? dateB - dateA : dateA - dateB;
-                    });
-                  
-                  if (filtered.length === 0) return <li>Nema kvarova sa izabranim filterom.</li>;
-                  
-                  return filtered.map((iss) => (
-                    <li key={iss._id}>
-                      <div>
-                        <div style={{fontWeight:700}}>{iss.title || 'Kvar'}</div>
-                        <div className="meta">
-                          {new Date(iss.createdAt).toLocaleString()}
-                          {issueViewFilter === 'all' && iss.tenant && (
-                            <span> • Stan {iss.tenant.apartment?.unitNumber || 'N/A'}</span>
-                          )}
-                        </div>
-                        <div className="muted">{iss.description}</div>
-                        <div style={{fontSize:'0.9em',marginTop:4}}>
-                          <span style={{color:iss.priority==='high'?'#b00':iss.priority==='medium'?'#f59e0b':'#10b981',fontWeight:600}}>
-                            {iss.priority === 'high' ? '🔴 Visok' : iss.priority === 'medium' ? '🟡 Srednji' : '🟢 Nizak'} prioritet
-                          </span>
-                        </div>
-                      </div>
-                      <div style={{textAlign:'right'}}>
-                        <div className={statusClass(iss.status)}>{statusLabel(iss.status)}</div>
-                      </div>
-                    </li>
-                  ));
-                })()}
-              </ul>
-            )}
-          </div>
-        )}
-
-        {/* Bulletin page removed */}
 
         {(tenantNav === 'dashboard' || tenantNav === 'overview') && (
           <div>
@@ -832,91 +889,6 @@ function TenantDashboard({ user, tenantNav, setTenantNav, onUserUpdate }) {
 
       </div>
       
-      {/* Issue Reporting Modal */}
-      {showIssueModal && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: 'rgba(0,0,0,0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000
-        }}>
-          <div style={{
-            background: 'white',
-            padding: 30,
-            borderRadius: 8,
-            width: '90%',
-            maxWidth: 600
-          }}>
-            <h3 style={{ marginTop: 0, marginBottom: 20, color: '#2c3e50' }}>Prijavite kvar</h3>
-            <form onSubmit={handleReport} style={{display:'grid',gap:12}}>
-              <div>
-                <label style={{display:'block', marginBottom:5, fontSize:14, color:'#2c3e50'}}>Naslov</label>
-                <input 
-                  type="text"
-                  placeholder="Kratak naslov (npr. Curenje česme)" 
-                  value={title} 
-                  onChange={e=>setTitle(e.target.value)}
-                  style={{width:'100%', padding:10, border:'1px solid #ddd', borderRadius:4, fontSize:14}}
-                />
-              </div>
-              <div>
-                <label style={{display:'block', marginBottom:5, fontSize:14, color:'#2c3e50'}}>Opis</label>
-                <textarea 
-                  placeholder="Opišite problem detaljno..." 
-                  value={issue} 
-                  onChange={e=>setIssue(e.target.value)} 
-                  rows={5}
-                  style={{width:'100%', padding:10, border:'1px solid #ddd', borderRadius:4, fontSize:14}}
-                />
-              </div>
-              <div>
-                <label style={{display:'block', marginBottom:8, fontSize:14, color:'#2c3e50'}}>Hitnost</label>
-                <div style={{display:'flex', gap:15}}>
-                  <label style={{display:'flex', alignItems:'center', gap:5}}>
-                    <input type="radio" name="priority" value="low" checked={priority === 'low'} onChange={() => setPriority('low')} />
-                    <span>Niska</span>
-                  </label>
-                  <label style={{display:'flex', alignItems:'center', gap:5}}>
-                    <input type="radio" name="priority" value="medium" checked={priority === 'medium'} onChange={() => setPriority('medium')} />
-                    <span>Srednja</span>
-                  </label>
-                  <label style={{display:'flex', alignItems:'center', gap:5}}>
-                    <input type="radio" name="priority" value="high" checked={priority === 'high'} onChange={() => setPriority('high')} />
-                    <span>Visoka</span>
-                  </label>
-                </div>
-              </div>
-              <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop:10 }}>
-                <button 
-                  type="button" 
-                  onClick={() => { 
-                    setShowIssueModal(false); 
-                    setTitle(''); 
-                    setIssue(''); 
-                    setPriority('low'); 
-                    setError('');
-                  }} 
-                  style={{ padding: '10px 20px', background: '#6c757d', color: 'white', border: 'none', borderRadius: 4, cursor: 'pointer' }}
-                >
-                  Otkaži
-                </button>
-                <button 
-                  type="submit" 
-                  style={{ padding: '10px 20px', background: '#198654', color: 'white', border: 'none', borderRadius: 4, cursor: 'pointer' }}
-                >
-                  Prijavi
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

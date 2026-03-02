@@ -14,7 +14,9 @@
   /* Accent Colors (Subtle, Muted) */
   --primary-blue: #3498db;
   --primary-blue-dark: #2980b9;
-  --success-green: #27ae60;
+  --success-green: #10b981;
+  --success-green-light: #34d399;
+  --success-green-dark: #059669;
   --warning-orange: #e67e22;
   --error-red: #c0392b;
   --info-gray: #95a5a6;
@@ -137,6 +139,38 @@ select {
   color: var(--text-primary);
 }
 
+/* Hide ALL password reveal/eye icons - all browsers */
+input[type="password"]::-ms-reveal,
+input[type="password"]::-ms-clear {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+input[type="password"]::-webkit-credentials-auto-fill-button,
+input[type="password"]::-webkit-caps-lock-indicator,
+input[type="password"]::-webkit-textfield-decoration-container {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+  position: absolute !important;
+}
+
+/* Edge password reveal button */
+input[type="password"]::-ms-reveal {
+  display: none !important;
+}
+
+/* Remove any browser default buttons/icons */
+input::-webkit-inner-spin-button,
+input::-webkit-outer-spin-button,
+input::-webkit-clear-button,
+input::-webkit-search-cancel-button {
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  display: none !important;
+}
+
 input:focus,
 textarea:focus,
 select:focus {
@@ -167,7 +201,17 @@ label {
   color: var(--text-secondary);
 }
 
+.badge.reported {
+  background: #f3f4f6;
+  color: #6b7280;
+}
+
 .badge-forwarded {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.badge.forwarded {
   background: #fef3c7;
   color: #d97706;
 }
@@ -177,17 +221,37 @@ label {
   color: var(--primary-blue);
 }
 
+.badge.in-review {
+  background: #dbeafe;
+  color: var(--primary-blue);
+}
+
 .badge-in-progress {
-  background: #fed7aa;
-  color: var(--warning-orange);
+  background: #d1fae5;
+  color: #059669;
+}
+
+.badge.in-progress {
+  background: #d1fae5;
+  color: #059669;
 }
 
 .badge-resolved {
-  background: #d1fae5;
-  color: var(--success-green);
+  background: #a7f3d0;
+  color: #047857;
+}
+
+.badge.done {
+  background: #a7f3d0;
+  color: #047857;
 }
 
 .badge-rejected {
+  background: #fee2e2;
+  color: var(--error-red);
+}
+
+.badge.rejected {
   background: #fee2e2;
   color: var(--error-red);
 }

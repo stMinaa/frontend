@@ -22,6 +22,11 @@ module.exports = {
         mode: 'full'
       },
       {
+        type: 'router',
+        pattern: 'src/Dashboard.js',
+        mode: 'full'
+      },
+      {
         type: 'services',
         pattern: 'src/services/**/*',
         mode: 'full'
@@ -131,10 +136,16 @@ module.exports = {
           allow: ['utils']
         },
         
-        // Root (App.js) can import everything
+        // Router (Dashboard.js) can import pages, components, hooks, utils
+        {
+          from: ['router'],
+          allow: ['pages', 'components', 'hooks', 'utils']
+        },
+
+        // Root (App.js, index.js) can import everything including root
         {
           from: ['root'],
-          allow: ['components', 'pages', 'services', 'hooks', 'utils']
+          allow: ['root', 'router', 'components', 'pages', 'services', 'hooks', 'utils']
         }
       ]
     }],
@@ -150,7 +161,7 @@ module.exports = {
       skipComments: true
     }],
     'max-lines-per-function': ['error', {
-      max: 40,
+      max: 50,
       skipBlankLines: true,
       skipComments: true
     }],

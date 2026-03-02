@@ -1,10 +1,9 @@
 /* eslint-disable max-lines, max-lines-per-function, complexity, max-depth, no-console, no-mixed-operators, react/no-array-index-key */
 import React, { useState, useEffect } from 'react';
 
+import { statusClass, statusLabel } from '../../utils/statusHelpers';
 import Modal from '../Modal';
 import PieChart from '../PieChart';
-
-import { statusClass, statusLabel } from '../../utils/statusHelpers';
 
 import ManagerProfile from './ManagerProfile';
 
@@ -101,6 +100,7 @@ function ManagerDashboard({ user, activeTab = 'home' }) {
   const [notices, setNotices] = useState([]);
   const [, setNoticesLoading] = useState(false);
   const [noticeContent, setNoticeContent] = useState('');
+  const [noticeTitle, setNoticeTitle] = useState('');
   const [noticeMsg, setNoticeMsg] = useState('');
   // Issues state
   const [issues, setIssues] = useState([]);
@@ -250,14 +250,14 @@ function ManagerDashboard({ user, activeTab = 'home' }) {
           headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
         });
         const pollsData = await resPolls.json();
-        if (resPolls.ok) setPolls(pollsData);
+        if (resPolls.ok) setPolls(Array.isArray(pollsData.data) ? pollsData.data : []);
         // Fetch notices for the building
         setNoticesLoading(true);
         const resNotices = await fetch(`http://localhost:5000/api/buildings/${selectedBuilding._id}/notices`, {
           headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
         });
         const noticesData = await resNotices.json();
-        if (resNotices.ok && Array.isArray(noticesData)) setNotices(noticesData);
+        if (resNotices.ok && Array.isArray(noticesData.data)) setNotices(noticesData.data);
         setNoticesLoading(false);
         // Fetch issues from manager's buildings (backend filters automatically)
         setIssueLoading(true);
@@ -398,7 +398,7 @@ function ManagerDashboard({ user, activeTab = 'home' }) {
           headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
         });
         const pollsData = await resPolls.json();
-        if (resPolls.ok) setPolls(pollsData);
+        if (resPolls.ok) setPolls(Array.isArray(pollsData.data) ? pollsData.data : []);
         // Reset form
         setPollQuestion('');
         setPollOptions(['', '']);
@@ -425,7 +425,7 @@ function ManagerDashboard({ user, activeTab = 'home' }) {
           headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
         });
         const pollsData = await resPolls.json();
-        if (resPolls.ok) setPolls(pollsData);
+        if (resPolls.ok) setPolls(Array.isArray(pollsData.data) ? pollsData.data : []);
         setMessage('Anketa zatvorena.');
       } else {
         const data = await res.json().catch(()=>({}));
@@ -460,18 +460,19 @@ function ManagerDashboard({ user, activeTab = 'home' }) {
       const res = await fetch(`http://localhost:5000/api/buildings/${selectedBuilding._id}/notices`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + localStorage.getItem('token') },
-        body: JSON.stringify({ content: noticeContent })
+        body: JSON.stringify({ title: noticeTitle, content: noticeContent })
       });
       const data = await res.json();
       if (res.ok) {
         setNoticeMsg('Obaveštenje objavljeno.');
         setNoticeContent('');
+        setNoticeTitle('');
         // Refresh
         const resNotices = await fetch(`http://localhost:5000/api/buildings/${selectedBuilding._id}/notices`, {
           headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
         });
         const noticesData = await resNotices.json();
-        if (resNotices.ok && Array.isArray(noticesData)) setNotices(noticesData);
+        if (resNotices.ok && Array.isArray(noticesData.data)) setNotices(noticesData.data);
       } else {
         setNoticeMsg(data.message || 'Objavljivanje neuspelo.');
       }
@@ -493,7 +494,7 @@ function ManagerDashboard({ user, activeTab = 'home' }) {
         headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
       });
       const noticesData = await resNotices.json();
-      if (resNotices.ok && Array.isArray(noticesData)) setNotices(noticesData);
+      if (resNotices.ok && Array.isArray(noticesData.data)) setNotices(noticesData.data);
       setNoticeMsg('Obaveštenje obrisano.');
     } catch (_) {
       setNoticeMsg('Brisanje neuspelo');
@@ -1011,7 +1012,7 @@ function ManagerDashboard({ user, activeTab = 'home' }) {
                   } : {}}
                 >
                   <div className="meta" style={{fontSize:12}}>{new Date(item.createdAt).toLocaleDateString()}</div>
-                  <div className="title">Obaveštenje</div>
+                  <div className="title">{item.title || 'Obaveštenje'}</div>
                   <div>{item.content}</div>
                   <div className="meta" style={{marginTop:6, fontWeight:isMgr?'600':'normal'}}>{item.authorName || 'Upravnik'}{isMgr?' • Upravnik':''}</div>
                   <button
@@ -1063,12 +1064,13 @@ function ManagerDashboard({ user, activeTab = 'home' }) {
           {combined.length===0 && <div className="muted">Nema stavki na oglasnoj tabli.</div>}
         </div>
         {showNoticeModal && (
-          <Modal title="Novo obaveštenje" onClose={()=>setShowNoticeModal(false)}>
+          <Modal title="Novo obaveštenje" onClose={()=>{setNoticeContent('');setNoticeTitle('');setNoticeMsg('');setShowNoticeModal(false);}}>
             <form onSubmit={handlePostNotice} style={{display:'grid',gap:12}}>
-              <textarea rows={4} placeholder="Podelite obaveštenje o zgradi..." value={noticeContent} onChange={e=>setNoticeContent(e.target.value)} />
+              <input type="text" placeholder="Naslov obaveštenja (opciono)" value={noticeTitle} onChange={e=>setNoticeTitle(e.target.value)} />
+              <textarea rows={4} placeholder="Sadržaj obaveštenja..." value={noticeContent} onChange={e=>setNoticeContent(e.target.value)} />
               <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
                 <button type="submit" className="btn-flat btn-flat-primary">Objavi obaveštenje</button>
-                <button type="button" className="btn-flat btn-flat-outline" onClick={()=>{setNoticeContent('');setShowNoticeModal(false);}}>Otkaži</button>
+                <button type="button" className="btn-flat btn-flat-outline" onClick={()=>{setNoticeContent('');setNoticeTitle('');setNoticeMsg('');setShowNoticeModal(false);}}>Otkaži</button>
               </div>
             </form>
             {noticeMsg && <div style={{marginTop:8,fontSize:13}}>{noticeMsg}</div>}

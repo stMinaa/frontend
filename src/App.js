@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
+
 import './App.css';
+import Dashboard from './Dashboard';
 import Home from './Home';
 import Login from './Login';
 import Signup from './Signup';
-import Dashboard from './Dashboard';
 
 function App() {
   const [currentPage, setCurrentPage] = useState('home');
@@ -36,6 +37,10 @@ function App() {
     setActiveTab(tab);
   };
 
+  const handleUserUpdate = (updatedUser) => {
+    setUser(updatedUser);
+  };
+
   // Not logged in
   if (!user) {
     return (
@@ -54,6 +59,7 @@ function App() {
       activeTab={activeTab}
       onTabChange={handleTabChange}
       onLogout={handleLogout}
+      onUserUpdate={handleUserUpdate}
     />
   );
 }

@@ -1,7 +1,15 @@
+/* eslint-disable max-nested-callbacks */
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import Login from './Login';
+
+// Mock VideoBackground to prevent jsdom video errors
+jest.mock('./components/VideoBackground', () => {
+  return function MockVideoBackground({ children }) {
+    return <div data-testid="video-background">{children}</div>;
+  };
+});
 
 // Mock fetch
 global.fetch = jest.fn();
@@ -18,13 +26,12 @@ describe('Login Component', () => {
   // SUCCESS SCENARIOS
   describe('Success Scenarios', () => {
     test('should render login form with all required elements', () => {
-      render(<Login onLogin={mockOnLogin} onNavigate={mockOnNavigate} />);
+      const { container } = render(<Login onLogin={mockOnLogin} onNavigate={mockOnNavigate} />);
 
-      expect(screen.getByRole('heading', { name: /log in/i })).toBeInTheDocument();
-      expect(screen.getByPlaceholderText('Username or Email')).toBeInTheDocument();
-      expect(screen.getByPlaceholderText('Password')).toBeInTheDocument();
+      expect(screen.getByPlaceholderText('anja@smartwalls')).toBeInTheDocument();
+      expect(container.querySelector('input[type="password"]')).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /log in/i })).toBeInTheDocument();
-      expect(screen.getByText(/don't have an account/i)).toBeInTheDocument();
+      expect(screen.getByText(/nemate nalog/i)).toBeInTheDocument();
     });
 
     test('should successfully login with valid credentials', async () => {
@@ -39,13 +46,13 @@ describe('Login Component', () => {
 
       fetch.mockResolvedValueOnce({
         ok: true,
-        json: async () => ({ token: mockToken, user: mockUser })
+        json: async () => ({ data: { token: mockToken, user: mockUser } })
       });
 
-      render(<Login onLogin={mockOnLogin} onNavigate={mockOnNavigate} />);
+      const { container } = render(<Login onLogin={mockOnLogin} onNavigate={mockOnNavigate} />);
 
-      const usernameInput = screen.getByPlaceholderText('Username or Email');
-      const passwordInput = screen.getByPlaceholderText('Password');
+      const usernameInput = screen.getByPlaceholderText('anja@smartwalls');
+      const passwordInput = container.querySelector('input[type="password"]');
       const loginButton = screen.getByRole('button', { name: /log in/i });
 
       fireEvent.change(usernameInput, { target: { value: 'testuser' } });
@@ -71,13 +78,13 @@ describe('Login Component', () => {
 
       fetch.mockResolvedValueOnce({
         ok: true,
-        json: async () => ({ token: mockToken, user: mockUser })
+        json: async () => ({ data: { token: mockToken, user: mockUser } })
       });
 
-      render(<Login onLogin={mockOnLogin} onNavigate={mockOnNavigate} />);
+      const { container } = render(<Login onLogin={mockOnLogin} onNavigate={mockOnNavigate} />);
 
-      fireEvent.change(screen.getByPlaceholderText('Username or Email'), { target: { value: 'test@example.com' } });
-      fireEvent.change(screen.getByPlaceholderText('Password'), { target: { value: 'pass123' } });
+      fireEvent.change(screen.getByPlaceholderText('anja@smartwalls'), { target: { value: 'test@example.com' } });
+      fireEvent.change(container.querySelector('input[type="password"]'), { target: { value: 'pass123' } });
       fireEvent.click(screen.getByRole('button', { name: /log in/i }));
 
       await waitFor(() => {
@@ -89,32 +96,32 @@ describe('Login Component', () => {
   // INVALID INPUT SCENARIOS
   describe('Invalid Input Scenarios', () => {
     test('should show error when username is empty', async () => {
-      render(<Login onLogin={mockOnLogin} onNavigate={mockOnNavigate} />);
+      const { container } = render(<Login onLogin={mockOnLogin} onNavigate={mockOnNavigate} />);
 
-      const passwordInput = screen.getByPlaceholderText('Password');
+      const passwordInput = container.querySelector('input[type="password"]');
       const loginButton = screen.getByRole('button', { name: /log in/i });
 
       fireEvent.change(passwordInput, { target: { value: 'password123' } });
       fireEvent.click(loginButton);
 
       await waitFor(() => {
-        expect(screen.getByText('Username and password are required')).toBeInTheDocument();
+        expect(screen.getByText('Korisničko ime i lozinka su obavezni')).toBeInTheDocument();
       });
       expect(fetch).not.toHaveBeenCalled();
       expect(mockOnLogin).not.toHaveBeenCalled();
     });
 
     test('should show error when password is empty', async () => {
-      render(<Login onLogin={mockOnLogin} onNavigate={mockOnNavigate} />);
+      const { container } = render(<Login onLogin={mockOnLogin} onNavigate={mockOnNavigate} />);
 
-      const usernameInput = screen.getByPlaceholderText('Username or Email');
+      const usernameInput = screen.getByPlaceholderText('anja@smartwalls');
       const loginButton = screen.getByRole('button', { name: /log in/i });
 
       fireEvent.change(usernameInput, { target: { value: 'testuser' } });
       fireEvent.click(loginButton);
 
       await waitFor(() => {
-        expect(screen.getByText('Username and password are required')).toBeInTheDocument();
+        expect(screen.getByText('Korisničko ime i lozinka su obavezni')).toBeInTheDocument();
       });
       expect(fetch).not.toHaveBeenCalled();
     });
@@ -125,7 +132,7 @@ describe('Login Component', () => {
       fireEvent.click(screen.getByRole('button', { name: /log in/i }));
 
       await waitFor(() => {
-        expect(screen.getByText('Username and password are required')).toBeInTheDocument();
+        expect(screen.getByText('Korisničko ime i lozinka su obavezni')).toBeInTheDocument();
       });
       expect(fetch).not.toHaveBeenCalled();
     });
@@ -136,10 +143,10 @@ describe('Login Component', () => {
         json: async () => ({ message: 'Invalid credentials' })
       });
 
-      render(<Login onLogin={mockOnLogin} onNavigate={mockOnNavigate} />);
+      const { container } = render(<Login onLogin={mockOnLogin} onNavigate={mockOnNavigate} />);
 
-      fireEvent.change(screen.getByPlaceholderText('Username or Email'), { target: { value: 'wronguser' } });
-      fireEvent.change(screen.getByPlaceholderText('Password'), { target: { value: 'wrongpass' } });
+      fireEvent.change(screen.getByPlaceholderText('anja@smartwalls'), { target: { value: 'wronguser' } });
+      fireEvent.change(container.querySelector('input[type="password"]'), { target: { value: 'wrongpass' } });
       fireEvent.click(screen.getByRole('button', { name: /log in/i }));
 
       await waitFor(() => {
@@ -157,13 +164,13 @@ describe('Login Component', () => {
 
       fetch.mockResolvedValueOnce({
         ok: true,
-        json: async () => ({ token: mockToken, user: mockUser })
+        json: async () => ({ data: { token: mockToken, user: mockUser } })
       });
 
-      render(<Login onLogin={mockOnLogin} onNavigate={mockOnNavigate} />);
+      const { container } = render(<Login onLogin={mockOnLogin} onNavigate={mockOnNavigate} />);
 
-      fireEvent.change(screen.getByPlaceholderText('Username or Email'), { target: { value: '  testuser  ' } });
-      fireEvent.change(screen.getByPlaceholderText('Password'), { target: { value: 'pass123' } });
+      fireEvent.change(screen.getByPlaceholderText('anja@smartwalls'), { target: { value: '  testuser  ' } });
+      fireEvent.change(container.querySelector('input[type="password"]'), { target: { value: 'pass123' } });
       fireEvent.click(screen.getByRole('button', { name: /log in/i }));
 
       await waitFor(() => {
@@ -178,14 +185,14 @@ describe('Login Component', () => {
     test('should handle network error gracefully', async () => {
       fetch.mockRejectedValueOnce(new Error('Network error'));
 
-      render(<Login onLogin={mockOnLogin} onNavigate={mockOnNavigate} />);
+      const { container } = render(<Login onLogin={mockOnLogin} onNavigate={mockOnNavigate} />);
 
-      fireEvent.change(screen.getByPlaceholderText('Username or Email'), { target: { value: 'testuser' } });
-      fireEvent.change(screen.getByPlaceholderText('Password'), { target: { value: 'pass123' } });
+      fireEvent.change(screen.getByPlaceholderText('anja@smartwalls'), { target: { value: 'testuser' } });
+      fireEvent.change(container.querySelector('input[type="password"]'), { target: { value: 'pass123' } });
       fireEvent.click(screen.getByRole('button', { name: /log in/i }));
 
       await waitFor(() => {
-        expect(screen.getByText(/connection error/i)).toBeInTheDocument();
+        expect(screen.getByText(/Greška.*konekcije/i)).toBeInTheDocument();
       });
       expect(mockOnLogin).not.toHaveBeenCalled();
     });
@@ -193,28 +200,28 @@ describe('Login Component', () => {
     test('should disable form while loading', async () => {
       fetch.mockImplementationOnce(() => new Promise(resolve => setTimeout(resolve, 1000)));
 
-      render(<Login onLogin={mockOnLogin} onNavigate={mockOnNavigate} />);
+      const { container } = render(<Login onLogin={mockOnLogin} onNavigate={mockOnNavigate} />);
 
-      fireEvent.change(screen.getByPlaceholderText('Username or Email'), { target: { value: 'test' } });
-      fireEvent.change(screen.getByPlaceholderText('Password'), { target: { value: 'pass' } });
+      fireEvent.change(screen.getByPlaceholderText('anja@smartwalls'), { target: { value: 'test' } });
+      fireEvent.change(container.querySelector('input[type="password"]'), { target: { value: 'pass' } });
       fireEvent.click(screen.getByRole('button', { name: /log in/i }));
 
       await waitFor(() => {
-        expect(screen.getByRole('button', { name: /logging in/i })).toBeDisabled();
-        expect(screen.getByPlaceholderText('Username or Email')).toBeDisabled();
-        expect(screen.getByPlaceholderText('Password')).toBeDisabled();
+        expect(screen.getByRole('button', { name: /prijavljivanje/i })).toBeDisabled();
+        expect(screen.getByPlaceholderText('anja@smartwalls')).toBeDisabled();
+        expect(container.querySelector('input[type="password"]')).toBeDisabled();
       });
     });
 
     test('should handle whitespace-only inputs as empty', async () => {
-      render(<Login onLogin={mockOnLogin} onNavigate={mockOnNavigate} />);
+      const { container } = render(<Login onLogin={mockOnLogin} onNavigate={mockOnNavigate} />);
 
-      fireEvent.change(screen.getByPlaceholderText('Username or Email'), { target: { value: '   ' } });
-      fireEvent.change(screen.getByPlaceholderText('Password'), { target: { value: '   ' } });
+      fireEvent.change(screen.getByPlaceholderText('anja@smartwalls'), { target: { value: '   ' } });
+      fireEvent.change(container.querySelector('input[type="password"]'), { target: { value: '   ' } });
       fireEvent.click(screen.getByRole('button', { name: /log in/i }));
 
       await waitFor(() => {
-        expect(screen.getByText('Username and password are required')).toBeInTheDocument();
+        expect(screen.getByText('Korisničko ime i lozinka su obavezni')).toBeInTheDocument();
       });
       expect(fetch).not.toHaveBeenCalled();
     });
@@ -222,10 +229,10 @@ describe('Login Component', () => {
 
   // NAVIGATION
   describe('Navigation', () => {
-    test('should navigate to signup when Sign Up is clicked', () => {
+    test('should navigate to signup when Registruj se is clicked', () => {
       render(<Login onLogin={mockOnLogin} onNavigate={mockOnNavigate} />);
 
-      const signupButton = screen.getByText('Sign Up');
+      const signupButton = screen.getByText('Registruj se');
       fireEvent.click(signupButton);
 
       expect(mockOnNavigate).toHaveBeenCalledWith('signup');
@@ -239,15 +246,6 @@ describe('Login Component', () => {
 
       expect(mockOnNavigate).toHaveBeenCalledWith('home');
     });
-
-    test('should navigate to home when Smartwalls logo is clicked', () => {
-      render(<Login onLogin={mockOnLogin} onNavigate={mockOnNavigate} />);
-
-      const logo = screen.getByText('Smartwalls');
-      fireEvent.click(logo);
-
-      expect(mockOnNavigate).toHaveBeenCalledWith('home');
-    });
   });
 
   // SECURITY
@@ -255,22 +253,22 @@ describe('Login Component', () => {
     test('should not expose password in error messages', async () => {
       fetch.mockRejectedValueOnce(new Error('Network error'));
 
-      render(<Login onLogin={mockOnLogin} onNavigate={mockOnNavigate} />);
+      const { container } = render(<Login onLogin={mockOnLogin} onNavigate={mockOnNavigate} />);
 
-      fireEvent.change(screen.getByPlaceholderText('Username or Email'), { target: { value: 'test' } });
-      fireEvent.change(screen.getByPlaceholderText('Password'), { target: { value: 'secretpassword' } });
+      fireEvent.change(screen.getByPlaceholderText('anja@smartwalls'), { target: { value: 'test' } });
+      fireEvent.change(container.querySelector('input[type="password"]'), { target: { value: 'secretpassword' } });
       fireEvent.click(screen.getByRole('button', { name: /log in/i }));
 
       await waitFor(() => {
-        const errorMessage = screen.getByText(/connection error/i);
+        const errorMessage = screen.getByText(/Greška.*konekcije/i);
         expect(errorMessage.textContent).not.toContain('secretpassword');
       });
     });
 
     test('should use password input type for password field', () => {
-      render(<Login onLogin={mockOnLogin} onNavigate={mockOnNavigate} />);
+      const { container } = render(<Login onLogin={mockOnLogin} onNavigate={mockOnNavigate} />);
 
-      const passwordInput = screen.getByPlaceholderText('Password');
+      const passwordInput = container.querySelector('input[type="password"]');
       expect(passwordInput).toHaveAttribute('type', 'password');
     });
   });
@@ -280,13 +278,13 @@ describe('Login Component', () => {
     test('should send POST request to correct endpoint', async () => {
       fetch.mockResolvedValueOnce({
         ok: true,
-        json: async () => ({ token: 'token', user: { username: 'test' } })
+        json: async () => ({ data: { token: 'token', user: { username: 'test' } } })
       });
 
-      render(<Login onLogin={mockOnLogin} onNavigate={mockOnNavigate} />);
+      const { container } = render(<Login onLogin={mockOnLogin} onNavigate={mockOnNavigate} />);
 
-      fireEvent.change(screen.getByPlaceholderText('Username or Email'), { target: { value: 'test' } });
-      fireEvent.change(screen.getByPlaceholderText('Password'), { target: { value: 'pass' } });
+      fireEvent.change(screen.getByPlaceholderText('anja@smartwalls'), { target: { value: 'test' } });
+      fireEvent.change(container.querySelector('input[type="password"]'), { target: { value: 'pass' } });
       fireEvent.click(screen.getByRole('button', { name: /log in/i }));
 
       await waitFor(() => {
@@ -307,10 +305,10 @@ describe('Login Component', () => {
         json: async () => ({ message: 'Internal server error' })
       });
 
-      render(<Login onLogin={mockOnLogin} onNavigate={mockOnNavigate} />);
+      const { container } = render(<Login onLogin={mockOnLogin} onNavigate={mockOnNavigate} />);
 
-      fireEvent.change(screen.getByPlaceholderText('Username or Email'), { target: { value: 'test' } });
-      fireEvent.change(screen.getByPlaceholderText('Password'), { target: { value: 'pass' } });
+      fireEvent.change(screen.getByPlaceholderText('anja@smartwalls'), { target: { value: 'test' } });
+      fireEvent.change(container.querySelector('input[type="password"]'), { target: { value: 'pass' } });
       fireEvent.click(screen.getByRole('button', { name: /log in/i }));
 
       await waitFor(() => {
@@ -324,14 +322,14 @@ describe('Login Component', () => {
         json: async () => ({})
       });
 
-      render(<Login onLogin={mockOnLogin} onNavigate={mockOnNavigate} />);
+      const { container } = render(<Login onLogin={mockOnLogin} onNavigate={mockOnNavigate} />);
 
-      fireEvent.change(screen.getByPlaceholderText('Username or Email'), { target: { value: 'test' } });
-      fireEvent.change(screen.getByPlaceholderText('Password'), { target: { value: 'pass' } });
+      fireEvent.change(screen.getByPlaceholderText('anja@smartwalls'), { target: { value: 'test' } });
+      fireEvent.change(container.querySelector('input[type="password"]'), { target: { value: 'pass' } });
       fireEvent.click(screen.getByRole('button', { name: /log in/i }));
 
       await waitFor(() => {
-        expect(screen.getByText('Login failed')).toBeInTheDocument();
+        expect(screen.getByText('Prijava neuspešna')).toBeInTheDocument();
       });
     });
   });

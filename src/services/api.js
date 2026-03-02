@@ -7,6 +7,7 @@ import { API_ENDPOINTS } from '../config/constants';
 
 /**
  * HTTP request wrapper with error handling
+ * Supports both old and new API response formats
  */
 const request = async (url, options = {}) => {
   try {
@@ -18,24 +19,30 @@ const request = async (url, options = {}) => {
       ...options,
     });
 
-    const data = await response.json();
+    const responseData = await response.json();
 
     if (!response.ok) {
-      throw {
-        status: response.status,
-        message: data.message || 'Request failed',
-      };
+      const err = new Error(responseData.message || 'Request failed');
+      err.status = response.status;
+      err.error = responseData.error;
+      throw err;
     }
 
-    return data;
+    // New standardized format: { success, message, data }
+    // Return data property if it exists, otherwise return entire response for backward compatibility
+    if (responseData.hasOwnProperty('success') && responseData.hasOwnProperty('data')) {
+      return responseData.data;
+    }
+
+    // Fallback: return entire response (old format or non-standard response)
+    return responseData;
   } catch (error) {
     if (error.status) {
       throw error;
     }
-    throw {
-      status: 0,
-      message: 'Network error. Please check your connection.',
-    };
+    const netErr = new Error('Network error. Please check your connection.');
+    netErr.status = 0;
+    throw netErr;
   }
 };
 
