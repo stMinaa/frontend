@@ -203,9 +203,9 @@ module.exports = {
       }
     },
     
-    // Relax rules for service worker
+    // Relax rules for service worker (including CRA-generated serviceWorkerRegistration.js)
     {
-      files: ['src/serviceWorker.js', 'src/service-worker.js'],
+      files: ['src/serviceWorker.js', 'src/service-worker.js', 'src/serviceWorkerRegistration.js'],
       rules: {
         'max-lines': 'off',
         'no-console': 'off'

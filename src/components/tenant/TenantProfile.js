@@ -1,4 +1,4 @@
-/* eslint-disable max-lines-per-function, complexity, max-depth, max-lines */
+/* eslint-disable max-lines-per-function, complexity, max-depth, max-lines, no-console */
 import React, { useState } from 'react';
 
 function TenantProfile({ user, token, onUserUpdate }) {

@@ -1,4 +1,4 @@
-/* eslint-disable max-lines-per-function */
+/* eslint-disable max-lines-per-function, react/no-array-index-key, no-mixed-operators */
 import React from 'react';
 
 function PieChart({ data, size = 120, colors = [], style = {}, className, donut = true, pastel = true }) {
@@ -20,7 +20,7 @@ function PieChart({ data, size = 120, colors = [], style = {}, className, donut 
     r = Math.min(255, Math.max(0, Math.round(r + (255 - r) * amt)));
     g = Math.min(255, Math.max(0, Math.round(g + (255 - g) * amt)));
     b = Math.min(255, Math.max(0, Math.round(b + (255 - b) * amt)));
-    return `#${(1 << 24 | (r << 16) | (g << 8) | b).toString(16).slice(1)}`;
+    return `#${((1 << 24) | (r << 16) | (g << 8) | b).toString(16).slice(1)}`;
   };
   const uid = Math.random().toString(36).slice(2, 8);
   const rawTotal = data.reduce((a, b) => a + (Number(b.value) || 0), 0);

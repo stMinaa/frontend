@@ -1,6 +1,9 @@
+/* eslint-disable testing-library/no-node-access, testing-library/no-container */
 import React from 'react';
+
 import { render, screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
+
 import Home from './Home';
 
 describe('Home Component', () => {
