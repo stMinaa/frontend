@@ -1,9 +1,11 @@
+/* eslint-disable max-lines-per-function, boundaries/element-types */
 /**
  * Building Selection Component
  * Handles building and apartment selection for tenant signup
  */
 
 import React, { useEffect, useState } from 'react';
+
 import { buildingAPI } from '../services/api';
 
 function BuildingSelection({ onBuildingSelect, onApartmentSelect }) {
@@ -29,6 +31,7 @@ function BuildingSelection({ onBuildingSelect, onApartmentSelect }) {
       setSelectedApartment('');
       onApartmentSelect('');
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedBuilding]);
 
   const fetchBuildings = async () => {

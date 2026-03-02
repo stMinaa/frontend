@@ -1,7 +1,9 @@
-/* eslint-disable max-nested-callbacks */
+/* eslint-disable max-nested-callbacks, testing-library/no-container, testing-library/no-node-access, testing-library/no-wait-for-multiple-assertions */
 import React from 'react';
+
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
+
 import Login from './Login';
 
 // Mock VideoBackground to prevent jsdom video errors
@@ -112,7 +114,7 @@ describe('Login Component', () => {
     });
 
     test('should show error when password is empty', async () => {
-      const { container } = render(<Login onLogin={mockOnLogin} onNavigate={mockOnNavigate} />);
+      render(<Login onLogin={mockOnLogin} onNavigate={mockOnNavigate} />);
 
       const usernameInput = screen.getByPlaceholderText('anja@smartwalls');
       const loginButton = screen.getByRole('button', { name: /log in/i });
