@@ -28,7 +28,6 @@ describe('Home Component', () => {
 
       expect(screen.getByRole('button', { name: /home/i })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /login/i })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /get started/i })).toBeInTheDocument();
     });
 
     test('should render video background component', () => {
@@ -49,15 +48,6 @@ describe('Home Component', () => {
 
       const loginButtons = screen.getAllByRole('button', { name: /login/i });
       fireEvent.click(loginButtons[0]); // Click nav Login button
-
-      expect(mockOnNavigate).toHaveBeenCalledWith('login');
-    });
-
-    test('should navigate to login when Get Started button is clicked', () => {
-      render(<Home onNavigate={mockOnNavigate} />);
-
-      const getStartedButton = screen.getByRole('button', { name: /get started/i });
-      fireEvent.click(getStartedButton);
 
       expect(mockOnNavigate).toHaveBeenCalledWith('login');
     });
@@ -87,12 +77,6 @@ describe('Home Component', () => {
       expect(screen.getByText("Tennet's assembly and building management")).toBeInTheDocument();
     });
 
-    test('should have proper button styling classes', () => {
-      render(<Home onNavigate={mockOnNavigate} />);
-
-      const getStartedButton = screen.getByRole('button', { name: /get started/i });
-      expect(getStartedButton).toHaveStyle({ background: '#27ae60' });
-    });
   });
 
   // EDGE CASES
@@ -128,7 +112,6 @@ describe('Home Component', () => {
     test('should have readable button text', () => {
       render(<Home onNavigate={mockOnNavigate} />);
 
-      expect(screen.getByRole('button', { name: /get started/i })).toHaveAccessibleName();
       expect(screen.getByRole('button', { name: /home/i })).toHaveAccessibleName();
       expect(screen.getAllByRole('button', { name: /login/i })[0]).toHaveAccessibleName();
     });

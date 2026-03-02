@@ -28,14 +28,14 @@ describe('Signup Component', () => {
     test('should render signup form with all required elements', () => {
       render(<Signup onNavigate={mockOnNavigate} />);
 
-      expect(screen.getByRole('heading', { name: /sign up/i })).toBeInTheDocument();
-      expect(screen.getByPlaceholderText('Username')).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: /registracija/i })).toBeInTheDocument();
+      expect(screen.getByPlaceholderText('Korisničko ime')).toBeInTheDocument();
       expect(screen.getByPlaceholderText('Email')).toBeInTheDocument();
-      expect(screen.getByPlaceholderText(/first name/i)).toBeInTheDocument();
-      expect(screen.getByPlaceholderText(/last name/i)).toBeInTheDocument();
-      expect(screen.getByLabelText(/select your role/i)).toBeInTheDocument();
-      expect(screen.getByPlaceholderText(/password/i)).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /sign up/i })).toBeInTheDocument();
+      expect(screen.getByPlaceholderText('Ime (opciono)')).toBeInTheDocument();
+      expect(screen.getByPlaceholderText('Prezime (opciono)')).toBeInTheDocument();
+      expect(screen.getByLabelText(/izaberite ulogu/i)).toBeInTheDocument();
+      expect(screen.getByPlaceholderText(/lozinka/i)).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /registruj se/i })).toBeInTheDocument();
     });
 
     test('should successfully signup with required fields only (tenant)', async () => {
@@ -55,10 +55,10 @@ describe('Signup Component', () => {
 
       render(<Signup onNavigate={mockOnNavigate} />);
 
-      fireEvent.change(screen.getByPlaceholderText('Username'), { target: { value: 'newuser' } });
+      fireEvent.change(screen.getByPlaceholderText('Korisničko ime'), { target: { value: 'newuser' } });
       fireEvent.change(screen.getByPlaceholderText('Email'), { target: { value: 'new@example.com' } });
-      fireEvent.change(screen.getByPlaceholderText(/password/i), { target: { value: 'password123' } });
-      fireEvent.click(screen.getByRole('button', { name: /sign up/i }));
+      fireEvent.change(screen.getByPlaceholderText(/lozinka/i), { target: { value: 'password123' } });
+      fireEvent.click(screen.getByRole('button', { name: /registruj se/i }));
 
       await waitFor(() => {
         expect(fetch).toHaveBeenCalledWith('http://localhost:5000/api/auth/signup', {
@@ -76,8 +76,8 @@ describe('Signup Component', () => {
       });
 
       await waitFor(() => {
-        expect(screen.getByText(/account created/i)).toBeInTheDocument();
-        expect(screen.getByText(/requires manager approval/i)).toBeInTheDocument();
+        expect(screen.getByText(/nalog kreiran/i)).toBeInTheDocument();
+        expect(screen.getByText(/odobrenja/i)).toBeInTheDocument();
       });
     });
 
@@ -89,13 +89,13 @@ describe('Signup Component', () => {
 
       render(<Signup onNavigate={mockOnNavigate} />);
 
-      fireEvent.change(screen.getByPlaceholderText('Username'), { target: { value: 'john' } });
+      fireEvent.change(screen.getByPlaceholderText('Korisničko ime'), { target: { value: 'john' } });
       fireEvent.change(screen.getByPlaceholderText('Email'), { target: { value: 'john@test.com' } });
-      fireEvent.change(screen.getByPlaceholderText(/first name/i), { target: { value: 'John' } });
-      fireEvent.change(screen.getByPlaceholderText(/last name/i), { target: { value: 'Doe' } });
-      fireEvent.change(screen.getByLabelText(/select your role/i), { target: { value: 'manager' } });
-      fireEvent.change(screen.getByPlaceholderText(/password/i), { target: { value: 'secure123' } });
-      fireEvent.click(screen.getByRole('button', { name: /sign up/i }));
+      fireEvent.change(screen.getByPlaceholderText('Ime (opciono)'), { target: { value: 'John' } });
+      fireEvent.change(screen.getByPlaceholderText('Prezime (opciono)'), { target: { value: 'Doe' } });
+      fireEvent.change(screen.getByLabelText(/izaberite ulogu/i), { target: { value: 'manager' } });
+      fireEvent.change(screen.getByPlaceholderText(/lozinka/i), { target: { value: 'secure123' } });
+      fireEvent.click(screen.getByRole('button', { name: /registruj se/i }));
 
       await waitFor(() => {
         expect(fetch).toHaveBeenCalledWith('http://localhost:5000/api/auth/signup', {
@@ -121,13 +121,13 @@ describe('Signup Component', () => {
 
       render(<Signup onNavigate={mockOnNavigate} />);
 
-      fireEvent.change(screen.getByPlaceholderText('Username'), { target: { value: 'test' } });
+      fireEvent.change(screen.getByPlaceholderText('Korisničko ime'), { target: { value: 'test' } });
       fireEvent.change(screen.getByPlaceholderText('Email'), { target: { value: 'test@test.com' } });
-      fireEvent.change(screen.getByPlaceholderText(/password/i), { target: { value: 'pass123' } });
-      fireEvent.click(screen.getByRole('button', { name: /sign up/i }));
+      fireEvent.change(screen.getByPlaceholderText(/lozinka/i), { target: { value: 'pass123' } });
+      fireEvent.click(screen.getByRole('button', { name: /registruj se/i }));
 
       await waitFor(() => {
-        expect(screen.getByText(/account created/i)).toBeInTheDocument();
+        expect(screen.getByText(/nalog kreiran/i)).toBeInTheDocument();
       });
 
       // Fast-forward timer by 2 seconds
@@ -150,11 +150,11 @@ describe('Signup Component', () => {
 
         const { unmount } = render(<Signup onNavigate={mockOnNavigate} />);
 
-        fireEvent.change(screen.getByPlaceholderText('Username'), { target: { value: 'test' } });
+        fireEvent.change(screen.getByPlaceholderText('Korisničko ime'), { target: { value: 'test' } });
         fireEvent.change(screen.getByPlaceholderText('Email'), { target: { value: 'test@test.com' } });
-        fireEvent.change(screen.getByLabelText(/select your role/i), { target: { value: role } });
-        fireEvent.change(screen.getByPlaceholderText(/password/i), { target: { value: 'pass123' } });
-        fireEvent.click(screen.getByRole('button', { name: /sign up/i }));
+        fireEvent.change(screen.getByLabelText(/izaberite ulogu/i), { target: { value: role } });
+        fireEvent.change(screen.getByPlaceholderText(/lozinka/i), { target: { value: 'pass123' } });
+        fireEvent.click(screen.getByRole('button', { name: /registruj se/i }));
 
         await waitFor(() => {
           expect(fetch).toHaveBeenCalledWith(
@@ -176,11 +176,11 @@ describe('Signup Component', () => {
       render(<Signup onNavigate={mockOnNavigate} />);
 
       fireEvent.change(screen.getByPlaceholderText('Email'), { target: { value: 'test@test.com' } });
-      fireEvent.change(screen.getByPlaceholderText(/password/i), { target: { value: 'pass123' } });
-      fireEvent.click(screen.getByRole('button', { name: /sign up/i }));
+      fireEvent.change(screen.getByPlaceholderText(/lozinka/i), { target: { value: 'pass123' } });
+      fireEvent.click(screen.getByRole('button', { name: /registruj se/i }));
 
       await waitFor(() => {
-        expect(screen.getByText(/username, email, and password are required/i)).toBeInTheDocument();
+        expect(screen.getByText(/korisničko ime, email i lozinka su obavezni/i)).toBeInTheDocument();
       });
       expect(fetch).not.toHaveBeenCalled();
     });
@@ -188,12 +188,12 @@ describe('Signup Component', () => {
     test('should show error when email is missing', async () => {
       render(<Signup onNavigate={mockOnNavigate} />);
 
-      fireEvent.change(screen.getByPlaceholderText('Username'), { target: { value: 'test' } });
-      fireEvent.change(screen.getByPlaceholderText(/password/i), { target: { value: 'pass123' } });
-      fireEvent.click(screen.getByRole('button', { name: /sign up/i }));
+      fireEvent.change(screen.getByPlaceholderText('Korisničko ime'), { target: { value: 'test' } });
+      fireEvent.change(screen.getByPlaceholderText(/lozinka/i), { target: { value: 'pass123' } });
+      fireEvent.click(screen.getByRole('button', { name: /registruj se/i }));
 
       await waitFor(() => {
-        expect(screen.getByText(/username, email, and password are required/i)).toBeInTheDocument();
+        expect(screen.getByText(/korisničko ime, email i lozinka su obavezni/i)).toBeInTheDocument();
       });
       expect(fetch).not.toHaveBeenCalled();
     });
@@ -201,12 +201,12 @@ describe('Signup Component', () => {
     test('should show error when password is missing', async () => {
       render(<Signup onNavigate={mockOnNavigate} />);
 
-      fireEvent.change(screen.getByPlaceholderText('Username'), { target: { value: 'test' } });
+      fireEvent.change(screen.getByPlaceholderText('Korisničko ime'), { target: { value: 'test' } });
       fireEvent.change(screen.getByPlaceholderText('Email'), { target: { value: 'test@test.com' } });
-      fireEvent.click(screen.getByRole('button', { name: /sign up/i }));
+      fireEvent.click(screen.getByRole('button', { name: /registruj se/i }));
 
       await waitFor(() => {
-        expect(screen.getByText(/username, email, and password are required/i)).toBeInTheDocument();
+        expect(screen.getByText(/korisničko ime, email i lozinka su obavezni/i)).toBeInTheDocument();
       });
       expect(fetch).not.toHaveBeenCalled();
     });
@@ -214,13 +214,13 @@ describe('Signup Component', () => {
     test('should show error for password less than 6 characters', async () => {
       render(<Signup onNavigate={mockOnNavigate} />);
 
-      fireEvent.change(screen.getByPlaceholderText('Username'), { target: { value: 'test' } });
+      fireEvent.change(screen.getByPlaceholderText('Korisničko ime'), { target: { value: 'test' } });
       fireEvent.change(screen.getByPlaceholderText('Email'), { target: { value: 'test@test.com' } });
-      fireEvent.change(screen.getByPlaceholderText(/password/i), { target: { value: 'abc' } });
-      fireEvent.click(screen.getByRole('button', { name: /sign up/i }));
+      fireEvent.change(screen.getByPlaceholderText(/lozinka/i), { target: { value: 'abc' } });
+      fireEvent.click(screen.getByRole('button', { name: /registruj se/i }));
 
       await waitFor(() => {
-        expect(screen.getByText(/password must be at least 6 characters/i)).toBeInTheDocument();
+        expect(screen.getByText(/lozinka mora imati najmanje 6 karaktera/i)).toBeInTheDocument();
       });
       expect(fetch).not.toHaveBeenCalled();
     });
@@ -228,13 +228,13 @@ describe('Signup Component', () => {
     test('should show error for invalid email format', async () => {
       render(<Signup onNavigate={mockOnNavigate} />);
 
-      fireEvent.change(screen.getByPlaceholderText('Username'), { target: { value: 'test' } });
+      fireEvent.change(screen.getByPlaceholderText('Korisničko ime'), { target: { value: 'test' } });
       fireEvent.change(screen.getByPlaceholderText('Email'), { target: { value: 'invalid-email' } });
-      fireEvent.change(screen.getByPlaceholderText(/password/i), { target: { value: 'pass123' } });
-      fireEvent.click(screen.getByRole('button', { name: /sign up/i }));
+      fireEvent.change(screen.getByPlaceholderText(/lozinka/i), { target: { value: 'pass123' } });
+      fireEvent.click(screen.getByRole('button', { name: /registruj se/i }));
 
       await waitFor(() => {
-        expect(screen.getByText(/invalid email format/i)).toBeInTheDocument();
+        expect(screen.getByText(/neispravan format email/i)).toBeInTheDocument();
       });
       expect(fetch).not.toHaveBeenCalled();
     });
@@ -247,10 +247,10 @@ describe('Signup Component', () => {
 
       render(<Signup onNavigate={mockOnNavigate} />);
 
-      fireEvent.change(screen.getByPlaceholderText('Username'), { target: { value: 'existing' } });
+      fireEvent.change(screen.getByPlaceholderText('Korisničko ime'), { target: { value: 'existing' } });
       fireEvent.change(screen.getByPlaceholderText('Email'), { target: { value: 'test@test.com' } });
-      fireEvent.change(screen.getByPlaceholderText(/password/i), { target: { value: 'pass123' } });
-      fireEvent.click(screen.getByRole('button', { name: /sign up/i }));
+      fireEvent.change(screen.getByPlaceholderText(/lozinka/i), { target: { value: 'pass123' } });
+      fireEvent.click(screen.getByRole('button', { name: /registruj se/i }));
 
       await waitFor(() => {
         expect(screen.getByText('Username already exists')).toBeInTheDocument();
@@ -268,12 +268,12 @@ describe('Signup Component', () => {
 
       render(<Signup onNavigate={mockOnNavigate} />);
 
-      fireEvent.change(screen.getByPlaceholderText('Username'), { target: { value: '  test  ' } });
+      fireEvent.change(screen.getByPlaceholderText('Korisničko ime'), { target: { value: '  test  ' } });
       fireEvent.change(screen.getByPlaceholderText('Email'), { target: { value: '  test@test.com  ' } });
-      fireEvent.change(screen.getByPlaceholderText(/first name/i), { target: { value: '  John  ' } });
-      fireEvent.change(screen.getByPlaceholderText(/last name/i), { target: { value: '  Doe  ' } });
-      fireEvent.change(screen.getByPlaceholderText(/password/i), { target: { value: 'pass123' } });
-      fireEvent.click(screen.getByRole('button', { name: /sign up/i }));
+      fireEvent.change(screen.getByPlaceholderText('Ime (opciono)'), { target: { value: '  John  ' } });
+      fireEvent.change(screen.getByPlaceholderText('Prezime (opciono)'), { target: { value: '  Doe  ' } });
+      fireEvent.change(screen.getByPlaceholderText(/lozinka/i), { target: { value: 'pass123' } });
+      fireEvent.click(screen.getByRole('button', { name: /registruj se/i }));
 
       await waitFor(() => {
         expect(fetch).toHaveBeenCalledWith('http://localhost:5000/api/auth/signup', {
@@ -299,12 +299,12 @@ describe('Signup Component', () => {
 
       render(<Signup onNavigate={mockOnNavigate} />);
 
-      fireEvent.change(screen.getByPlaceholderText('Username'), { target: { value: 'test' } });
+      fireEvent.change(screen.getByPlaceholderText('Korisničko ime'), { target: { value: 'test' } });
       fireEvent.change(screen.getByPlaceholderText('Email'), { target: { value: 'test@test.com' } });
-      fireEvent.change(screen.getByPlaceholderText(/first name/i), { target: { value: '   ' } });
-      fireEvent.change(screen.getByPlaceholderText(/last name/i), { target: { value: '   ' } });
-      fireEvent.change(screen.getByPlaceholderText(/password/i), { target: { value: 'pass123' } });
-      fireEvent.click(screen.getByRole('button', { name: /sign up/i }));
+      fireEvent.change(screen.getByPlaceholderText('Ime (opciono)'), { target: { value: '   ' } });
+      fireEvent.change(screen.getByPlaceholderText('Prezime (opciono)'), { target: { value: '   ' } });
+      fireEvent.change(screen.getByPlaceholderText(/lozinka/i), { target: { value: 'pass123' } });
+      fireEvent.click(screen.getByRole('button', { name: /registruj se/i }));
 
       await waitFor(() => {
         const body = JSON.parse(fetch.mock.calls[0][1].body);
@@ -318,13 +318,13 @@ describe('Signup Component', () => {
 
       render(<Signup onNavigate={mockOnNavigate} />);
 
-      fireEvent.change(screen.getByPlaceholderText('Username'), { target: { value: 'test' } });
+      fireEvent.change(screen.getByPlaceholderText('Korisničko ime'), { target: { value: 'test' } });
       fireEvent.change(screen.getByPlaceholderText('Email'), { target: { value: 'test@test.com' } });
-      fireEvent.change(screen.getByPlaceholderText(/password/i), { target: { value: 'pass123' } });
-      fireEvent.click(screen.getByRole('button', { name: /sign up/i }));
+      fireEvent.change(screen.getByPlaceholderText(/lozinka/i), { target: { value: 'pass123' } });
+      fireEvent.click(screen.getByRole('button', { name: /registruj se/i }));
 
       await waitFor(() => {
-        expect(screen.getByText(/connection error/i)).toBeInTheDocument();
+        expect(screen.getByText(/greška.*konekcije/i)).toBeInTheDocument();
       });
     });
 
@@ -333,14 +333,14 @@ describe('Signup Component', () => {
 
       render(<Signup onNavigate={mockOnNavigate} />);
 
-      fireEvent.change(screen.getByPlaceholderText('Username'), { target: { value: 'test' } });
+      fireEvent.change(screen.getByPlaceholderText('Korisničko ime'), { target: { value: 'test' } });
       fireEvent.change(screen.getByPlaceholderText('Email'), { target: { value: 'test@test.com' } });
-      fireEvent.change(screen.getByPlaceholderText(/password/i), { target: { value: 'pass123' } });
-      fireEvent.click(screen.getByRole('button', { name: /sign up/i }));
+      fireEvent.change(screen.getByPlaceholderText(/lozinka/i), { target: { value: 'pass123' } });
+      fireEvent.click(screen.getByRole('button', { name: /registruj se/i }));
 
       await waitFor(() => {
-        expect(screen.getByRole('button', { name: /creating account/i })).toBeDisabled();
-        expect(screen.getByPlaceholderText('Username')).toBeDisabled();
+        expect(screen.getByRole('button', { name: /kreiram nalog/i })).toBeDisabled();
+        expect(screen.getByPlaceholderText('Korisničko ime')).toBeDisabled();
         expect(screen.getByPlaceholderText('Email')).toBeDisabled();
       });
     });
@@ -352,13 +352,13 @@ describe('Signup Component', () => {
         jest.clearAllMocks();
         const { unmount } = render(<Signup onNavigate={mockOnNavigate} />);
 
-        fireEvent.change(screen.getByPlaceholderText('Username'), { target: { value: 'test' } });
+        fireEvent.change(screen.getByPlaceholderText('Korisničko ime'), { target: { value: 'test' } });
         fireEvent.change(screen.getByPlaceholderText('Email'), { target: { value: email } });
-        fireEvent.change(screen.getByPlaceholderText(/password/i), { target: { value: 'pass123' } });
-        fireEvent.click(screen.getByRole('button', { name: /sign up/i }));
+        fireEvent.change(screen.getByPlaceholderText(/lozinka/i), { target: { value: 'pass123' } });
+        fireEvent.click(screen.getByRole('button', { name: /registruj se/i }));
 
         await waitFor(() => {
-          expect(screen.getByText(/invalid email format/i)).toBeInTheDocument();
+          expect(screen.getByText(/neispravan format email/i)).toBeInTheDocument();
         });
         expect(fetch).not.toHaveBeenCalled();
 
@@ -369,19 +369,18 @@ describe('Signup Component', () => {
     test('should default to tenant role', () => {
       render(<Signup onNavigate={mockOnNavigate} />);
 
-      const roleSelect = screen.getByLabelText(/select your role/i);
+      const roleSelect = screen.getByLabelText(/izaberite ulogu/i);
       expect(roleSelect.value).toBe('tenant');
     });
   });
 
   // NAVIGATION
   describe('Navigation', () => {
-    test('should navigate to login when Login button is clicked', () => {
+    test('should navigate to login when Prijavi se link is clicked', () => {
       render(<Signup onNavigate={mockOnNavigate} />);
 
-      // Click the Login button in the form footer (not the nav)
-      const loginButtons = screen.getAllByText('Login');
-      fireEvent.click(loginButtons[loginButtons.length - 1]);
+      const prijaveButton = screen.getByText('Prijavi se');
+      fireEvent.click(prijaveButton);
 
       expect(mockOnNavigate).toHaveBeenCalledWith('login');
     });
@@ -394,15 +393,6 @@ describe('Signup Component', () => {
 
       expect(mockOnNavigate).toHaveBeenCalledWith('home');
     });
-
-    test('should navigate to home when Smartwalls logo is clicked', () => {
-      render(<Signup onNavigate={mockOnNavigate} />);
-
-      const logo = screen.getByText('Smartwalls');
-      fireEvent.click(logo);
-
-      expect(mockOnNavigate).toHaveBeenCalledWith('home');
-    });
   });
 
   // SECURITY
@@ -410,7 +400,7 @@ describe('Signup Component', () => {
     test('should use password input type', () => {
       render(<Signup onNavigate={mockOnNavigate} />);
 
-      const passwordInput = screen.getByPlaceholderText(/password/i);
+      const passwordInput = screen.getByPlaceholderText(/lozinka/i);
       expect(passwordInput).toHaveAttribute('type', 'password');
     });
 
@@ -419,13 +409,13 @@ describe('Signup Component', () => {
 
       render(<Signup onNavigate={mockOnNavigate} />);
 
-      fireEvent.change(screen.getByPlaceholderText('Username'), { target: { value: 'test' } });
+      fireEvent.change(screen.getByPlaceholderText('Korisničko ime'), { target: { value: 'test' } });
       fireEvent.change(screen.getByPlaceholderText('Email'), { target: { value: 'test@test.com' } });
-      fireEvent.change(screen.getByPlaceholderText(/password/i), { target: { value: 'secretpassword123' } });
-      fireEvent.click(screen.getByRole('button', { name: /sign up/i }));
+      fireEvent.change(screen.getByPlaceholderText(/lozinka/i), { target: { value: 'secretpassword123' } });
+      fireEvent.click(screen.getByRole('button', { name: /registruj se/i }));
 
       await waitFor(() => {
-        const errorMessage = screen.getByText(/connection error/i);
+        const errorMessage = screen.getByText(/greška.*konekcije/i);
         expect(errorMessage.textContent).not.toContain('secretpassword123');
       });
     });
@@ -441,10 +431,10 @@ describe('Signup Component', () => {
 
       render(<Signup onNavigate={mockOnNavigate} />);
 
-      fireEvent.change(screen.getByPlaceholderText('Username'), { target: { value: 'test' } });
+      fireEvent.change(screen.getByPlaceholderText('Korisničko ime'), { target: { value: 'test' } });
       fireEvent.change(screen.getByPlaceholderText('Email'), { target: { value: 'test@test.com' } });
-      fireEvent.change(screen.getByPlaceholderText(/password/i), { target: { value: 'pass123' } });
-      fireEvent.click(screen.getByRole('button', { name: /sign up/i }));
+      fireEvent.change(screen.getByPlaceholderText(/lozinka/i), { target: { value: 'pass123' } });
+      fireEvent.click(screen.getByRole('button', { name: /registruj se/i }));
 
       await waitFor(() => {
         expect(fetch).toHaveBeenCalledWith(
@@ -466,10 +456,10 @@ describe('Signup Component', () => {
 
       render(<Signup onNavigate={mockOnNavigate} />);
 
-      fireEvent.change(screen.getByPlaceholderText('Username'), { target: { value: 'test' } });
+      fireEvent.change(screen.getByPlaceholderText('Korisničko ime'), { target: { value: 'test' } });
       fireEvent.change(screen.getByPlaceholderText('Email'), { target: { value: 'test@test.com' } });
-      fireEvent.change(screen.getByPlaceholderText(/password/i), { target: { value: 'pass123' } });
-      fireEvent.click(screen.getByRole('button', { name: /sign up/i }));
+      fireEvent.change(screen.getByPlaceholderText(/lozinka/i), { target: { value: 'pass123' } });
+      fireEvent.click(screen.getByRole('button', { name: /registruj se/i }));
 
       await waitFor(() => {
         expect(screen.getByText('Internal server error')).toBeInTheDocument();
@@ -484,13 +474,13 @@ describe('Signup Component', () => {
 
       render(<Signup onNavigate={mockOnNavigate} />);
 
-      fireEvent.change(screen.getByPlaceholderText('Username'), { target: { value: 'test' } });
+      fireEvent.change(screen.getByPlaceholderText('Korisničko ime'), { target: { value: 'test' } });
       fireEvent.change(screen.getByPlaceholderText('Email'), { target: { value: 'test@test.com' } });
-      fireEvent.change(screen.getByPlaceholderText(/password/i), { target: { value: 'pass123' } });
-      fireEvent.click(screen.getByRole('button', { name: /sign up/i }));
+      fireEvent.change(screen.getByPlaceholderText(/lozinka/i), { target: { value: 'pass123' } });
+      fireEvent.click(screen.getByRole('button', { name: /registruj se/i }));
 
       await waitFor(() => {
-        expect(screen.getByText('Signup failed')).toBeInTheDocument();
+        expect(screen.getByText('Registracija neuspešna')).toBeInTheDocument();
       });
     });
 
@@ -502,13 +492,13 @@ describe('Signup Component', () => {
 
       render(<Signup onNavigate={mockOnNavigate} />);
 
-      fireEvent.change(screen.getByPlaceholderText('Username'), { target: { value: 'test' } });
+      fireEvent.change(screen.getByPlaceholderText('Korisničko ime'), { target: { value: 'test' } });
       fireEvent.change(screen.getByPlaceholderText('Email'), { target: { value: 'test@test.com' } });
-      fireEvent.change(screen.getByPlaceholderText(/password/i), { target: { value: 'pass123' } });
-      fireEvent.click(screen.getByRole('button', { name: /sign up/i }));
+      fireEvent.change(screen.getByPlaceholderText(/lozinka/i), { target: { value: 'pass123' } });
+      fireEvent.click(screen.getByRole('button', { name: /registruj se/i }));
 
       await waitFor(() => {
-        expect(screen.getByText(/requires manager approval/i)).toBeInTheDocument();
+        expect(screen.getByText(/odobrenja/i)).toBeInTheDocument();
       });
     });
   });
